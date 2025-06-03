@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>贷款计算器 - 在线计算还款详情</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .loan-card {
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .loan-card .card-header {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            padding: 1rem;
+        }
+        
+        .loan-result {
+            display: none;
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+        }
+        
+        .summary-item {
+            padding: 1.25rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        }
+        
+        .summary-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .summary-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .summary-principal {
+            background-color: #e8f4fd;
+            border-left: 5px solid #0d6efd;
+        }
+        
+        .summary-interest {
+            background-color: #ffe8e8;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .summary-monthly {
+            background-color: #e7f9ec;
+            border-left: 5px solid #20c997;
+        }
+        
+        .summary-total {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+        }
+        
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            transition: background 0.2s;
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d6efd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d6efd;
+            cursor: pointer;
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: #6c757d;
+            font-weight: 500;
+            padding: 0.75rem 1rem;
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            border-color: #0d6efd;
+            background-color: transparent;
+        }
+        
+        table.payment-schedule {
+            font-size: 0.9rem;
+        }
+        
+        table.payment-schedule th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="../index.html">
+            <i class="bi bi-tools me-2"></i>工具箱
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="../index.html">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="../index.html#生活工具">生活工具</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容 -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                    <li class="breadcrumb-item"><a href="../index.html#生活工具">生活工具</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">贷款计算器</li>
+                </ol>
+            </nav>
+            <h1 class="mb-4"><i class="bi bi-calculator me-3"></i>贷款计算器</h1>
+            <p class="lead">计算您的贷款月供、总利息以及还款计划，帮助您做出更明智的财务决策。</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <!-- 贷款计算器表单 -->
+            <div class="card loan-card">
+                <div class="card-header py-3">
+                    <h5 class="mb-0"><i class="bi bi-credit-card me-2"></i>填写贷款信息</h5>
+                </div>
+                <div class="card-body">
+                    <form id="loan-calculator-form">
+                        <!-- 贷款类型 -->
+                        <div class="mb-3">
+                            <label class="form-label">贷款类型</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="loan-type" id="type-housing" value="housing" checked>
+                                <label class="btn btn-outline-primary" for="type-housing">
+                                    <i class="bi bi-house me-1"></i> 住房贷款
+                                </label>
+                                <input type="radio" class="btn-check" name="loan-type" id="type-car" value="car">
+                                <label class="btn btn-outline-primary" for="type-car">
+                                    <i class="bi bi-car-front me-1"></i> 汽车贷款
+                                </label>
+                                <input type="radio" class="btn-check" name="loan-type" id="type-personal" value="personal">
+                                <label class="btn btn-outline-primary" for="type-personal">
+                                    <i class="bi bi-person me-1"></i> 个人贷款
+                                </label>
+                            </div>
+                            <div id="loan-type-help" class="form-text mt-2 d-none">
+                                <span id="type-housing-help">住房贷款典型年限为20-30年，利率较低</span>
+                                <span id="type-car-help">汽车贷款典型年限为3-5年，利率适中</span>
+                                <span id="type-personal-help">个人贷款典型年限为1-5年，利率较高</span>
+                            </div>
+                        </div>
+                        
+                        <!-- 贷款金额 -->
+                        <div class="mb-3">
+                            <label for="loan-amount" class="form-label">贷款金额</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="loan-amount" min="1000" max="10000000" value="300000" required>
+                                <span class="input-group-text">元</span>
+                            </div>
+                            <div class="mt-2">
+                                <input type="range" class="range-slider" id="loan-amount-slider" min="1000" max="10000000" step="1000" value="300000">
+                                <div class="d-flex justify-content-between">
+                                    <small>1千</small>
+                                    <small>1千万</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 贷款期限 -->
+                        <div class="mb-3">
+                            <label for="loan-term" class="form-label">贷款期限</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="loan-term" min="1" max="30" value="30" required>
+                                <span class="input-group-text">年</span>
+                            </div>
+                            <div class="mt-2">
+                                <input type="range" class="range-slider" id="loan-term-slider" min="1" max="30" step="1" value="30">
+                                <div class="d-flex justify-content-between">
+                                    <small>1年</small>
+                                    <small>30年</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 年利率 -->
+                        <div class="mb-3">
+                            <label for="interest-rate" class="form-label">年利率</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="interest-rate" min="0.1" max="24" step="0.01" value="4.2" required>
+                                <span class="input-group-text">%</span>
+                            </div>
+                            <div class="mt-2">
+                                <input type="range" class="range-slider" id="interest-rate-slider" min="0.1" max="24" step="0.1" value="4.2">
+                                <div class="d-flex justify-content-between">
+                                    <small>0.1%</small>
+                                    <small>24%</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 还款方式 -->
+                        <div class="mb-3">
+                            <label class="form-label">还款方式</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="repayment-method" id="method-equal-principal-interest" value="equal-installment" checked>
+                                <label class="form-check-label" for="method-equal-principal-interest">
+                                    等额本息 <small class="text-muted">- 每月还款金额相同，前期还款中利息占比较大</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="repayment-method" id="method-equal-principal" value="equal-principal">
+                                <label class="form-check-label" for="method-equal-principal">
+                                    等额本金 <small class="text-muted">- 每月还款金额递减，总利息较低</small>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- 按钮 -->
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-calculator me-2"></i>计算贷款
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary btn-lg ms-2">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>重置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card loan-card mt-4">
+                <div class="card-header py-3">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>贷款说明</h5>
+                </div>
+                <div class="card-body">
+                    <h6>等额本息和等额本金的区别：</h6>
+                    <ul>
+                        <li><strong>等额本息</strong>：每月还款金额相同，但随着时间推移，利息减少，本金增加。</li>
+                        <li><strong>等额本金</strong>：每月还款金额递减，本金部分相同，但利息逐月减少。</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        <strong>小贴士：</strong> 等额本金方式总利息更低，但前期月供压力更大；等额本息方式月供稳定，但总利息较高。
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        本计算器结果仅供参考，实际贷款以银行机构审批和合同为准。
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 计算结果 -->
+        <div class="col-lg-7">
+            <div id="loan-result" class="loan-result">
+                <h4 class="mb-4"><i class="bi bi-graph-up me-2"></i>贷款计算结果</h4>
+                
+                <!-- 结果摘要 -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="summary-item summary-principal">
+                            <div class="summary-value" id="loan-principal">300,000</div>
+                            <div class="summary-label">贷款金额（元）</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="summary-item summary-interest">
+                            <div class="summary-value" id="total-interest">244,045</div>
+                            <div class="summary-label">支付利息（元）</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="summary-item summary-monthly">
+                            <div class="summary-value" id="monthly-payment">1,511</div>
+                            <div class="summary-label">月供（元）<span id="monthly-note"></span></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="summary-item summary-total">
+                            <div class="summary-value" id="total-payment">544,045</div>
+                            <div class="summary-label">还款总额（元）</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表和详情切换 -->
+                <ul class="nav nav-tabs mb-3" id="loan-result-tabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="chart-tab" data-bs-toggle="tab" data-bs-target="#chart-tab-pane" type="button" role="tab">
+                            <i class="bi bi-pie-chart me-1"></i> 图表分析
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule-tab-pane" type="button" role="tab">
+                            <i class="bi bi-table me-1"></i> 还款计划
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="loan-result-tabs-content">
+                    <!-- 图表分析 -->
+                    <div class="tab-pane fade show active" id="chart-tab-pane" role="tabpanel" tabindex="0">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">贷款组成</h5>
+                                        <div class="mt-3" style="height: 250px;">
+                                            <canvas id="composition-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">按年还款情况</h5>
+                                        <div class="mt-3" style="height: 250px;">
+                                            <canvas id="yearly-payment-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">月供构成变化</h5>
+                                        <div class="mt-3" style="height: 300px;">
+                                            <canvas id="payment-breakdown-chart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 还款计划 -->
+                    <div class="tab-pane fade" id="schedule-tab-pane" role="tabpanel" tabindex="0">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover payment-schedule">
+                                <thead>
+                                    <tr>
+                                        <th>期数</th>
+                                        <th>还款日期</th>
+                                        <th>月供（元）</th>
+                                        <th>本金（元）</th>
+                                        <th>利息（元）</th>
+                                        <th>剩余本金（元）</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payment-schedule">
+                                    <!-- 还款计划表格内容将通过JavaScript动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-3 d-flex justify-content-end">
+                            <button id="export-schedule" class="btn btn-outline-primary">
+                                <i class="bi bi-download me-2"></i>导出还款计划
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer bg-dark text-white py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <p><i class="bi bi-tools me-2"></i>工具箱 - 为个性而生的多功能在线工具</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="../index.html" class="text-white me-3">返回首页</a>
+                <a href="../index.html#生活工具" class="text-white">更多生活工具</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 获取DOM元素
+    const loanForm = document.getElementById('loan-calculator-form');
+    const loanAmountInput = document.getElementById('loan-amount');
+    const loanAmountSlider = document.getElementById('loan-amount-slider');
+    const loanTermInput = document.getElementById('loan-term');
+    const loanTermSlider = document.getElementById('loan-term-slider');
+    const interestRateInput = document.getElementById('interest-rate');
+    const interestRateSlider = document.getElementById('interest-rate-slider');
+    const resultDiv = document.getElementById('loan-result');
+    
+    // 图表对象
+    let compositionChart = null;
+    let yearlyPaymentChart = null;
+    let paymentBreakdownChart = null;
+    
+    // 同步输入框和滑块值
+    function syncInputAndSlider(input, slider) {
+        input.addEventListener('input', function() {
+            slider.value = this.value;
+        });
+        
+        slider.addEventListener('input', function() {
+            input.value = this.value;
+        });
+    }
+    
+    syncInputAndSlider(loanAmountInput, loanAmountSlider);
+    syncInputAndSlider(loanTermInput, loanTermSlider);
+    syncInputAndSlider(interestRateInput, interestRateSlider);
+    
+    // 显示贷款类型说明
+    document.querySelectorAll('input[name="loan-type"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const loanTypeHelp = document.getElementById('loan-type-help');
+            const typeHelps = document.querySelectorAll('#loan-type-help > span');
+            
+            typeHelps.forEach(help => {
+                help.style.display = 'none';
+            });
+            
+            const selectedHelp = document.getElementById(`type-${this.value}-help`);
+            if (selectedHelp) {
+                selectedHelp.style.display = 'block';
+                loanTypeHelp.classList.remove('d-none');
+            }
+            
+            // 根据贷款类型更新默认值
+            switch(this.value) {
+                case 'housing':
+                    loanAmountInput.value = 300000;
+                    loanAmountSlider.value = 300000;
+                    loanTermInput.value = 30;
+                    loanTermSlider.value = 30;
+                    interestRateInput.value = 4.2;
+                    interestRateSlider.value = 4.2;
+                    break;
+                case 'car':
+                    loanAmountInput.value = 150000;
+                    loanAmountSlider.value = 150000;
+                    loanTermInput.value = 5;
+                    loanTermSlider.value = 5;
+                    interestRateInput.value = 6.5;
+                    interestRateSlider.value = 6.5;
+                    break;
+                case 'personal':
+                    loanAmountInput.value = 50000;
+                    loanAmountSlider.value = 50000;
+                    loanTermInput.value = 3;
+                    loanTermSlider.value = 3;
+                    interestRateInput.value = 8.0;
+                    interestRateSlider.value = 8.0;
+                    break;
+            }
+        });
+    });
+    
+    // 触发初始贷款类型帮助文本
+    document.querySelector('input[name="loan-type"]:checked').dispatchEvent(new Event('change'));
+    
+    // 格式化数字为千分位分隔的字符串
+    function formatNumber(number) {
+        return new Intl.NumberFormat('zh-CN').format(Math.round(number));
+    }
+    
+    // 计算等额本息的月付款额
+    function calculateEqualInstallment(principal, annualRate, termYears) {
+        const monthlyRate = annualRate / 100 / 12;
+        const totalMonths = termYears * 12;
+        
+        if (monthlyRate === 0) {
+            return principal / totalMonths;
+        }
+        
+        const x = Math.pow(1 + monthlyRate, totalMonths);
+        return principal * monthlyRate * x / (x - 1);
+    }
+    
+    // 生成还款计划
+    function generatePaymentSchedule(principal, annualRate, termYears, method) {
+        const monthlyRate = annualRate / 100 / 12;
+        const totalMonths = termYears * 12;
+        const schedule = [];
+        
+        let remainingPrincipal = principal;
+        let totalPayment = 0;
+        let totalInterest = 0;
+        
+        // 等额本息计算
+        if (method === 'equal-installment') {
+            const monthlyPayment = calculateEqualInstallment(principal, annualRate, termYears);
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                const interest = remainingPrincipal * monthlyRate;
+                const principalPaid = monthlyPayment - interest;
+                remainingPrincipal -= principalPaid;
+                
+                // 处理最后一期可能的舍入误差
+                if (month === totalMonths) {
+                    const finalPayment = monthlyPayment + remainingPrincipal;
+                    schedule.push({
+                        month,
+                        payment: finalPayment,
+                        principal: principalPaid + remainingPrincipal,
+                        interest,
+                        remainingPrincipal: 0
+                    });
+                    
+                    totalPayment += finalPayment;
+                    totalInterest += interest;
+                    remainingPrincipal = 0;
+                } else {
+                    schedule.push({
+                        month,
+                        payment: monthlyPayment,
+                        principal: principalPaid,
+                        interest,
+                        remainingPrincipal: Math.max(0, remainingPrincipal)
+                    });
+                    
+                    totalPayment += monthlyPayment;
+                    totalInterest += interest;
+                }
+            }
+        } 
+        // 等额本金计算
+        else {
+            const monthlyPrincipal = principal / totalMonths;
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                const interest = remainingPrincipal * monthlyRate;
+                const payment = monthlyPrincipal + interest;
+                remainingPrincipal -= monthlyPrincipal;
+                
+                schedule.push({
+                    month,
+                    payment,
+                    principal: monthlyPrincipal,
+                    interest,
+                    remainingPrincipal: Math.max(0, remainingPrincipal)
+                });
+                
+                totalPayment += payment;
+                totalInterest += interest;
+            }
+        }
+        
+        return {
+            schedule,
+            summary: {
+                totalPayment,
+                totalInterest,
+                monthlyPayment: schedule[0].payment
+            }
+        };
+    }
+    
+    // 创建/更新贷款组成图表
+    function updateCompositionChart(principal, totalInterest) {
+        const ctx = document.getElementById('composition-chart').getContext('2d');
+        
+        if (compositionChart) {
+            compositionChart.destroy();
+        }
+        
+        compositionChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['本金', '利息'],
+                datasets: [{
+                    data: [principal, totalInterest],
+                    backgroundColor: [
+                        'rgba(13, 110, 253, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(13, 110, 253, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw;
+                                const percentage = ((value / (principal + totalInterest)) * 100).toFixed(1);
+                                return `${label}: ${formatNumber(value)}元 (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 创建/更新按年还款情况图表
+    function updateYearlyPaymentChart(schedule, termYears) {
+        const ctx = document.getElementById('yearly-payment-chart').getContext('2d');
+        const yearlyData = [];
+        
+        // 按年汇总数据
+        for (let year = 1; year <= termYears; year++) {
+            const startMonth = (year - 1) * 12 + 1;
+            const endMonth = Math.min(year * 12, schedule.length);
+            
+            let yearlyPrincipal = 0;
+            let yearlyInterest = 0;
+            
+            for (let i = startMonth - 1; i < endMonth; i++) {
+                yearlyPrincipal += schedule[i].principal;
+                yearlyInterest += schedule[i].interest;
+            }
+            
+            yearlyData.push({
+                year,
+                principal: yearlyPrincipal,
+                interest: yearlyInterest,
+                total: yearlyPrincipal + yearlyInterest
+            });
+        }
+        
+        if (yearlyPaymentChart) {
+            yearlyPaymentChart.destroy();
+        }
+        
+        const years = yearlyData.map(d => `第${d.year}年`);
+        const principalData = yearlyData.map(d => d.principal);
+        const interestData = yearlyData.map(d => d.interest);
+        
+        yearlyPaymentChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [
+                    {
+                        label: '本金',
+                        data: principalData,
+                        backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: '利息',
+                        data: interestData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        stacked: true
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('zh-CN') + '元';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.raw;
+                                return `${label}: ${formatNumber(value)}元`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 创建/更新月供构成变化图表
+    function updatePaymentBreakdownChart(schedule, termYears) {
+        const ctx = document.getElementById('payment-breakdown-chart').getContext('2d');
+        
+        // 按季度或年度采样数据以避免图表过于拥挤
+        const samples = [];
+        const sampleInterval = termYears > 10 ? 12 : (termYears > 5 ? 6 : 3);
+        
+        for (let i = 0; i < schedule.length; i += sampleInterval) {
+            samples.push(schedule[i]);
+        }
+        // 确保包含最后一期
+        if (samples[samples.length - 1].month !== schedule[schedule.length - 1].month) {
+            samples.push(schedule[schedule.length - 1]);
+        }
+        
+        if (paymentBreakdownChart) {
+            paymentBreakdownChart.destroy();
+        }
+        
+        const labels = samples.map(s => `第${s.month}期`);
+        const principalData = samples.map(s => s.principal);
+        const interestData = samples.map(s => s.interest);
+        
+        paymentBreakdownChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: '月供',
+                        data: samples.map(s => s.payment),
+                        borderColor: 'rgba(32, 201, 151, 1)',
+                        backgroundColor: 'rgba(32, 201, 151, 0.2)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    },
+                    {
+                        label: '本金部分',
+                        data: principalData,
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    },
+                    {
+                        label: '利息部分',
+                        data: interestData,
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('zh-CN') + '元';
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.dataset.label || '';
+                                const value = context.raw;
+                                return `${label}: ${formatNumber(value)}元`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 渲染还款计划表格
+    function renderPaymentSchedule(schedule) {
+        const scheduleTable = document.getElementById('payment-schedule');
+        scheduleTable.innerHTML = '';
+        
+        const today = new Date();
+        
+        schedule.forEach((payment, index) => {
+            const row = document.createElement('tr');
+            
+            // 计算还款日期
+            const paymentDate = new Date(today);
+            paymentDate.setMonth(today.getMonth() + payment.month);
+            const formattedDate = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            row.innerHTML = `
+                <td>${payment.month}</td>
+                <td>${formattedDate}</td>
+                <td>${formatNumber(payment.payment)}</td>
+                <td>${formatNumber(payment.principal)}</td>
+                <td>${formatNumber(payment.interest)}</td>
+                <td>${formatNumber(payment.remainingPrincipal)}</td>
+            `;
+            
+            scheduleTable.appendChild(row);
+        });
+    }
+    
+    // 导出还款计划为CSV
+    document.getElementById('export-schedule').addEventListener('click', function() {
+        const principal = parseFloat(loanAmountInput.value);
+        const annualRate = parseFloat(interestRateInput.value);
+        const termYears = parseInt(loanTermInput.value);
+        const method = document.querySelector('input[name="repayment-method"]:checked').value;
+        
+        const result = generatePaymentSchedule(principal, annualRate, termYears, method);
+        const schedule = result.schedule;
+        
+        let csvContent = "期数,还款日期,月供（元）,本金（元）,利息（元）,剩余本金（元）\n";
+        
+        const today = new Date();
+        
+        schedule.forEach(payment => {
+            const paymentDate = new Date(today);
+            paymentDate.setMonth(today.getMonth() + payment.month);
+            const formattedDate = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
+            
+            csvContent += `${payment.month},${formattedDate},${payment.payment.toFixed(2)},${payment.principal.toFixed(2)},${payment.interest.toFixed(2)},${payment.remainingPrincipal.toFixed(2)}\n`;
+        });
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', '贷款还款计划.csv');
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+    
+    // 表单提交事件
+    loanForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 获取输入值
+        const principal = parseFloat(loanAmountInput.value);
+        const annualRate = parseFloat(interestRateInput.value);
+        const termYears = parseInt(loanTermInput.value);
+        const method = document.querySelector('input[name="repayment-method"]:checked').value;
+        
+        // 表单验证
+        if (isNaN(principal) || principal <= 0) {
+            alert('请输入有效的贷款金额');
+            return;
+        }
+        
+        if (isNaN(annualRate) || annualRate <= 0) {
+            alert('请输入有效的年利率');
+            return;
+        }
+        
+        if (isNaN(termYears) || termYears <= 0) {
+            alert('请输入有效的贷款期限');
+            return;
+        }
+        
+        // 计算贷款
+        const result = generatePaymentSchedule(principal, annualRate, termYears, method);
+        const schedule = result.schedule;
+        const summary = result.summary;
+        
+        // 更新结果摘要
+        document.getElementById('loan-principal').textContent = formatNumber(principal);
+        document.getElementById('total-interest').textContent = formatNumber(summary.totalInterest);
+        document.getElementById('monthly-payment').textContent = formatNumber(summary.monthlyPayment);
+        
+        // 添加月供说明文本
+        const monthlyNote = document.getElementById('monthly-note');
+        if (method === 'equal-principal') {
+            monthlyNote.textContent = '（首月，逐月递减）';
+        } else {
+            monthlyNote.textContent = '';
+        }
+        
+        document.getElementById('total-payment').textContent = formatNumber(summary.totalPayment);
+        
+        // 更新图表
+        updateCompositionChart(principal, summary.totalInterest);
+        updateYearlyPaymentChart(schedule, termYears);
+        updatePaymentBreakdownChart(schedule, termYears);
+        
+        // 渲染还款计划表格
+        renderPaymentSchedule(schedule);
+        
+        // 显示结果
+        resultDiv.style.display = 'block';
+        
+        // 滚动到结果
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    
+    // 重置按钮事件
+    loanForm.addEventListener('reset', function() {
+        resultDiv.style.display = 'none';
+        
+        // 根据当前选中的贷款类型恢复默认值
+        const loanType = document.querySelector('input[name="loan-type"]:checked').value;
+        document.getElementById(`type-${loanType}`).dispatchEvent(new Event('change'));
+    });
+});
+</script>
+</body>
+</html> 

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI计算器 - 身体质量指数计算工具</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .bmi-result {
+            transition: all 0.3s ease;
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-top: 1.5rem;
+            display: none;
+        }
+        
+        .bmi-category {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .bmi-value {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+        
+        .result-underweight {
+            background-color: #e8f4fd;
+            border-left: 5px solid #0d6efd;
+        }
+        
+        .result-normal {
+            background-color: #d4edda;
+            border-left: 5px solid #198754;
+        }
+        
+        .result-overweight {
+            background-color: #fff3cd;
+            border-left: 5px solid #ffc107;
+        }
+        
+        .result-obese {
+            background-color: #f8d7da;
+            border-left: 5px solid #dc3545;
+        }
+        
+        .instruction-card {
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .instruction-card .card-header {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .bmi-chart {
+            max-width: 100%;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            transition: background 0.2s;
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d6efd;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .range-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #0d6efd;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<!-- 导航栏 -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <div class="container">
+        <a class="navbar-brand" href="../index.html">
+            <i class="bi bi-tools me-2"></i>工具箱
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="../index.html">首页</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="../index.html#生活工具">生活工具</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- 主要内容 -->
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                    <li class="breadcrumb-item"><a href="../index.html#生活工具">生活工具</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">BMI计算器</li>
+                </ol>
+            </nav>
+            <h1 class="mb-4"><i class="bi bi-calculator me-3"></i>BMI计算器</h1>
+            <p class="lead">身体质量指数(Body Mass Index, BMI)是评估体重与身高比例的常用方法，用于评估一个人的体重是否健康。</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card shadow-sm instruction-card">
+                <div class="card-header py-3">
+                    <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>计算您的BMI</h5>
+                </div>
+                <div class="card-body">
+                    <form id="bmi-form">
+                        <div class="row mb-4">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="height" class="form-label">身高 (厘米)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="height" name="height" min="50" max="250" value="170" required>
+                                    <span class="input-group-text">cm</span>
+                                </div>
+                                <input type="range" class="range-slider mt-2" id="height-slider" min="50" max="250" value="170">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="weight" class="form-label">体重 (公斤)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="weight" name="weight" min="20" max="200" value="65" required>
+                                    <span class="input-group-text">kg</span>
+                                </div>
+                                <input type="range" class="range-slider mt-2" id="weight-slider" min="20" max="200" value="65">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label class="form-label">性别</label>
+                                <div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gender" id="gender-male" value="male" checked>
+                                        <label class="form-check-label" for="gender-male">男性</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gender" id="gender-female" value="female">
+                                        <label class="form-check-label" for="gender-female">女性</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="age" class="form-label">年龄</label>
+                                <input type="number" class="form-control" id="age" name="age" min="2" max="120" value="30">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-calculator me-2"></i>计算BMI
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary btn-lg ms-2">
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>重置
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- BMI结果区域 -->
+            <div id="bmi-result" class="bmi-result">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4>您的BMI计算结果：</h4>
+                        <div id="bmi-value" class="bmi-value">22.5</div>
+                        <div id="bmi-category" class="bmi-category">正常体重</div>
+                        <p id="bmi-message">您的体重在正常范围内，维持健康的生活方式继续保持。</p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">您的理想体重范围</h5>
+                                <p id="ideal-weight-range">53.8 - 72.5 公斤</p>
+                                <h5 class="card-title mt-3">距离目标</h5>
+                                <p id="weight-to-target">您的体重正常，继续保持！</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-5">
+            <div class="card shadow-sm instruction-card">
+                <div class="card-header py-3">
+                    <h5 class="mb-0"><i class="bi bi-question-circle me-2"></i>什么是BMI？</h5>
+                </div>
+                <div class="card-body">
+                    <p>身体质量指数（Body Mass Index，BMI）是一个人的体重（单位：千克）除以身高（单位：米）的平方得出的数字，用于评估一个人的体重是否健康。</p>
+                    <p>BMI的计算公式： <strong>BMI = 体重(kg) / 身高(m)²</strong></p>
+                    
+                    <h5 class="mt-4">BMI值的分类标准（中国标准）：</h5>
+                    <ul class="list-group">
+                        <li class="list-group-item list-group-item-primary">BMI < 18.5：体重过轻</li>
+                        <li class="list-group-item list-group-item-success">18.5 ≤ BMI < 24：正常体重</li>
+                        <li class="list-group-item list-group-item-warning">24 ≤ BMI < 28：超重</li>
+                        <li class="list-group-item list-group-item-danger">BMI ≥ 28：肥胖</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        BMI提供一个大致的参考，但不考虑肌肉质量、骨骼密度等因素。运动员和健身爱好者的BMI可能会偏高，而不一定表示超重或肥胖。
+                    </div>
+                    
+                    <h5 class="mt-4">BMI视觉参考</h5>
+                    <div id="bmi-chart-container">
+                        <canvas id="bmiChart" height="150"></canvas>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-4">
+                <div class="card-header py-3">
+                    <h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>BMI对健康的影响</h5>
+                </div>
+                <div class="card-body">
+                    <h6>较高的BMI与以下风险增加相关：</h6>
+                    <ul>
+                        <li>心血管疾病</li>
+                        <li>高血压</li>
+                        <li>2型糖尿病</li>
+                        <li>某些类型的癌症</li>
+                        <li>睡眠呼吸暂停</li>
+                        <li>关节问题</li>
+                    </ul>
+                    
+                    <h6 class="mt-3">较低的BMI与以下风险增加相关：</h6>
+                    <ul>
+                        <li>营养不良</li>
+                        <li>骨质疏松症</li>
+                        <li>免疫系统功能下降</li>
+                        <li>贫血</li>
+                        <li>生育问题</li>
+                    </ul>
+                    
+                    <p class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        本计算器仅供参考，不能替代专业医疗建议。如有健康问题，请咨询医疗专业人士。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 页脚 -->
+<footer class="footer bg-dark text-white py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <p><i class="bi bi-tools me-2"></i>工具箱 - 为个性而生的多功能在线工具</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="../index.html" class="text-white me-3">返回首页</a>
+                <a href="../index.html#生活工具" class="text-white">更多生活工具</a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bmiForm = document.getElementById('bmi-form');
+    const heightInput = document.getElementById('height');
+    const weightInput = document.getElementById('weight');
+    const heightSlider = document.getElementById('height-slider');
+    const weightSlider = document.getElementById('weight-slider');
+    const resultDiv = document.getElementById('bmi-result');
+    const bmiValueEl = document.getElementById('bmi-value');
+    const bmiCategoryEl = document.getElementById('bmi-category');
+    const bmiMessageEl = document.getElementById('bmi-message');
+    const idealWeightRangeEl = document.getElementById('ideal-weight-range');
+    const weightToTargetEl = document.getElementById('weight-to-target');
+    
+    // 初始化BMI图表
+    const bmiChartCtx = document.getElementById('bmiChart').getContext('2d');
+    
+    // 创建渐变填充
+    const underweightGradient = bmiChartCtx.createLinearGradient(0, 0, 0, 400);
+    underweightGradient.addColorStop(0, 'rgba(13, 110, 253, 0.6)');
+    underweightGradient.addColorStop(1, 'rgba(13, 110, 253, 0.1)');
+    
+    const normalGradient = bmiChartCtx.createLinearGradient(0, 0, 0, 400);
+    normalGradient.addColorStop(0, 'rgba(25, 135, 84, 0.6)');
+    normalGradient.addColorStop(1, 'rgba(25, 135, 84, 0.1)');
+    
+    const overweightGradient = bmiChartCtx.createLinearGradient(0, 0, 0, 400);
+    overweightGradient.addColorStop(0, 'rgba(255, 193, 7, 0.6)');
+    overweightGradient.addColorStop(1, 'rgba(255, 193, 7, 0.1)');
+    
+    const obeseGradient = bmiChartCtx.createLinearGradient(0, 0, 0, 400);
+    obeseGradient.addColorStop(0, 'rgba(220, 53, 69, 0.6)');
+    obeseGradient.addColorStop(1, 'rgba(220, 53, 69, 0.1)');
+    
+    // 创建BMI图表
+    const bmiChart = new Chart(bmiChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ['偏瘦', '正常', '超重', '肥胖'],
+            datasets: [{
+                label: 'BMI 范围',
+                data: [18.5, 24 - 18.5, 28 - 24, 10], // 使用差值表示范围宽度
+                backgroundColor: [
+                    underweightGradient,
+                    normalGradient,
+                    overweightGradient,
+                    obeseGradient
+                ],
+                borderColor: [
+                    'rgba(13, 110, 253, 1)',
+                    'rgba(25, 135, 84, 1)',
+                    'rgba(255, 193, 7, 1)',
+                    'rgba(220, 53, 69, 1)'
+                ],
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 1,
+                categoryPercentage: 1
+            }]
+        },
+        options: {
+            indexAxis: 'x',
+            scales: {
+                x: {
+                    stacked: true,
+                    grid: {
+                        display: false
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    max: 40,
+                    title: {
+                        display: true,
+                        text: 'BMI 值'
+                    },
+                    ticks: {
+                        stepSize: 5,
+                        callback: function(value) {
+                            return value;
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const index = context.dataIndex;
+                            if (index === 0) {
+                                return 'BMI < 18.5: 偏瘦';
+                            } else if (index === 1) {
+                                return 'BMI 18.5-24: 正常';
+                            } else if (index === 2) {
+                                return 'BMI 24-28: 超重';
+                            } else {
+                                return 'BMI ≥ 28: 肥胖';
+                            }
+                        }
+                    }
+                }
+            },
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    
+    // 创建BMI指示器
+    let bmiIndicator = null;
+    
+    // 函数：更新BMI指示器
+    function updateBmiIndicator(bmiValue) {
+        // 如果已存在指示器，先删除
+        if (bmiIndicator) {
+            bmiChart.data.datasets = bmiChart.data.datasets.filter(dataset => dataset.label !== 'Your BMI');
+        }
+        
+        // 添加BMI指示器
+        bmiIndicator = {
+            label: 'Your BMI',
+            data: Array(4).fill(null),
+            pointBackgroundColor: 'rgba(255, 255, 255, 1)',
+            pointBorderColor: '#333',
+            pointBorderWidth: 2,
+            pointRadius: 6,
+            pointHoverRadius: 8,
+            type: 'line',
+            order: 0
+        };
+        
+        // 计算指示器位置
+        if (bmiValue < 18.5) {
+            // 偏瘦区域
+            bmiIndicator.data[0] = bmiValue;
+        } else if (bmiValue < 24) {
+            // 正常区域
+            bmiIndicator.data[1] = bmiValue;
+        } else if (bmiValue < 28) {
+            // 超重区域
+            bmiIndicator.data[2] = bmiValue;
+        } else {
+            // 肥胖区域
+            bmiIndicator.data[3] = bmiValue;
+        }
+        
+        // 添加到图表并刷新
+        bmiChart.data.datasets.push(bmiIndicator);
+        bmiChart.update();
+    }
+    
+    // 同步输入框和滑块值
+    heightInput.addEventListener('input', function() {
+        heightSlider.value = this.value;
+    });
+    
+    weightInput.addEventListener('input', function() {
+        weightSlider.value = this.value;
+    });
+    
+    heightSlider.addEventListener('input', function() {
+        heightInput.value = this.value;
+    });
+    
+    weightSlider.addEventListener('input', function() {
+        weightInput.value = this.value;
+    });
+    
+    // 表单提交事件
+    bmiForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 获取输入值
+        const height = parseFloat(heightInput.value);
+        const weight = parseFloat(weightInput.value);
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+        const age = parseInt(document.getElementById('age').value);
+        
+        // 表单验证
+        if (isNaN(height) || height < 50 || height > 250) {
+            alert('请输入有效的身高（50-250厘米）');
+            return;
+        }
+        
+        if (isNaN(weight) || weight < 20 || weight > 200) {
+            alert('请输入有效的体重（20-200公斤）');
+            return;
+        }
+        
+        // 计算BMI
+        const heightInM = height / 100;
+        const bmi = weight / (heightInM * heightInM);
+        const roundedBmi = Math.round(bmi * 10) / 10;
+        
+        // 显示BMI结果
+        bmiValueEl.textContent = roundedBmi;
+        
+        // 设置BMI分类和消息
+        let category, message, className;
+        
+        // 使用中国BMI标准
+        if (bmi < 18.5) {
+            category = '体重过轻';
+            message = '您的BMI低于正常范围，可能需要增加一些体重。建议增加适当的营养摄入和适度锻炼，以达到健康体重。';
+            className = 'result-underweight';
+        } else if (bmi < 24) {
+            category = '正常体重';
+            message = '您的体重在正常范围内，表示您的身高和体重比例非常健康。继续保持良好的饮食习惯和适量的体育锻炼。';
+            className = 'result-normal';
+        } else if (bmi < 28) {
+            category = '超重';
+            message = '您的BMI表明您超重，可能增加患某些健康问题的风险。建议适当减少热量摄入，增加体育锻炼，逐步达到健康体重。';
+            className = 'result-overweight';
+        } else {
+            category = '肥胖';
+            message = '您的BMI表明您属于肥胖，这可能会导致严重的健康问题。建议咨询医疗专业人士，制定合适的减重计划。';
+            className = 'result-obese';
+        }
+        
+        bmiCategoryEl.textContent = category;
+        bmiMessageEl.textContent = message;
+        
+        // 移除旧的类名，添加新的类名
+        resultDiv.className = 'bmi-result ' + className;
+        
+        // 计算理想体重范围（BMI 18.5-24之间）
+        const minIdealWeight = Math.round(18.5 * heightInM * heightInM);
+        const maxIdealWeight = Math.round(24 * heightInM * heightInM);
+        idealWeightRangeEl.textContent = `${minIdealWeight} - ${maxIdealWeight} 公斤`;
+        
+        // 计算距离目标体重
+        let weightToTarget;
+        if (bmi < 18.5) {
+            const targetWeight = minIdealWeight - weight;
+            weightToTarget = `需要增加约 ${Math.round(targetWeight)} 公斤才能达到健康体重范围`;
+        } else if (bmi > 24) {
+            const targetWeight = weight - maxIdealWeight;
+            weightToTarget = `需要减少约 ${Math.round(targetWeight)} 公斤才能达到健康体重范围`;
+        } else {
+            weightToTarget = '您的体重正常，继续保持！';
+        }
+        weightToTargetEl.textContent = weightToTarget;
+        
+        // 更新BMI图表指示器
+        updateBmiIndicator(roundedBmi);
+        
+        // 显示结果
+        resultDiv.style.display = 'block';
+        
+        // 滚动到结果
+        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+    
+    // 重置按钮事件
+    bmiForm.addEventListener('reset', function() {
+        resultDiv.style.display = 'none';
+        heightSlider.value = 170;
+        weightSlider.value = 65;
+        
+        // 重置BMI指示器
+        if (bmiIndicator) {
+            bmiChart.data.datasets = bmiChart.data.datasets.filter(dataset => dataset.label !== 'Your BMI');
+            bmiChart.update();
+            bmiIndicator = null;
+        }
+    });
+    
+    // 添加实时BMI计算
+    const inputElements = [heightInput, weightInput, heightSlider, weightSlider];
+    inputElements.forEach(el => {
+        el.addEventListener('input', function() {
+            const height = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+            
+            if (!isNaN(height) && !isNaN(weight) && height > 0 && weight > 0) {
+                const heightInM = height / 100;
+                const bmi = weight / (heightInM * heightInM);
+                const roundedBmi = Math.round(bmi * 10) / 10;
+                
+                // 更新BMI指示器（但不显示结果面板）
+                updateBmiIndicator(roundedBmi);
+            }
+        });
+    });
+});
+</script>
+</body>
+</html> 

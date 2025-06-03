@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>番茄工作法计时器</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .phase-badge { transition: all 0.3s; }
+        .progress { height: 8px; }
+        #timer-display { font-family: 'Courier New', monospace; }
+        
+        /* 与倒计时器一致的进度条动画 */
+        .progress-bar {
+            transition: width 1s linear;
+        }
+        
+        .tool-icons .badge {
+            background-color: var(--bs-primary);
+            font-size: 0.9rem;
+        }
+        
+        .card {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .shadow-sm {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)!important;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+    <a class="navbar-brand" href="../index.html">
+        <i class="bi bi-tools me-2"></i>工具箱
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+                <a class="nav-link" href="../index.html">首页</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="../index.html#popular">热门工具</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="../index.html#about">关于我们</a>
+            </li>
+            <li class="nav-item ms-2 d-flex align-items-center">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="dark-mode-toggle">
+                    <label class="form-check-label text-white" for="dark-mode-toggle">
+                        <i class="bi bi-moon-stars"></i>
+                    </label>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-clock me-2 text-primary"></i>番茄工作法</h1>
+                <p class="lead">高效时间管理法，专注工作与休息的节奏平衡</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html#生活工具">生活工具</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">番茄钟</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- 主控制面板 -->
+            <div class="col-md-8">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body text-center">
+                        <h3 class="mb-4">
+                            <span class="badge phase-badge bg-success">准备就绪</span>
+                        </h3>
+                        <div id="timer-display" class="display-1 mb-3">25:00</div>
+                        
+                        <div class="progress mb-4">
+                            <div id="progress-bar" class="progress-bar" role="progressbar"></div>
+                        </div>
+
+                        <div class="btn-group btn-group-lg">
+                            <button id="startBtn" class="btn btn-success px-4">
+                                <i class="bi bi-play-circle me-2"></i>开始
+                            </button>
+                            <button id="pauseBtn" class="btn btn-warning btn-lg" disabled>
+                                <i class="bi bi-pause-circle"></i> 暂停
+                            </button>
+                            <button id="resetBtn" class="btn btn-danger btn-lg" disabled>
+                                <i class="bi bi-arrow-clockwise"></i> 重置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 统计面板 -->
+            <div class="col-md-4">
+                <!-- 时间设置面板 -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-gear me-2"></i>时间设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">工作时间（分钟）</label>
+                            <input type="number" class="form-control" id="workTime" min="1" max="120" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">短休息（分钟）</label>
+                            <input type="number" class="form-control" id="shortBreak" min="1" max="30" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">长休息（分钟）</label>
+                            <input type="number" class="form-control" id="longBreak" min="1" max="60" required>
+                        </div>
+                        <button class="btn btn-primary w-100" id="saveSettings">
+                            <i class="bi bi-save me-2"></i>保存设置
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 统计面板 -->
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header">
+                        <h5 class="mb-0"><i class="bi bi-graph-up"></i> 今日统计</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span><i class="bi bi-check2-circle me-2 text-success"></i>完成番茄数</span>
+                                <span class="badge bg-primary rounded-pill" id="completedCount">0</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                中断次数
+                                <span class="badge bg-danger rounded-pill" id="interruptedCount">0</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相关工具链接 -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-link-45deg"></i> 相关工具</h5>
+                        <div class="list-group">
+                            <a href="countdown-timer.html" class="list-group-item list-group-item-action">
+                                <i class="bi bi-alarm"></i> 倒计时器
+                            </a>
+                            <a href="to-do-list.html" class="list-group-item list-group-item-action">
+                                <i class="bi bi-list-task"></i> 任务清单
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 音频通知 -->
+    <audio id="alert-sound" src="../media/alert.mp3"></audio>
+
+    <script src="../js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 初始化番茄钟参数
+        let workDuration = 25 * 60;
+        let shortBreak = 5 * 60;
+        let longBreak = 15 * 60;
+        
+        // 加载保存的设置
+        const savedSettings = JSON.parse(localStorage.getItem('pomodoroSettings')) || {};
+        if(savedSettings.workTime) workDuration = savedSettings.workTime * 60;
+        if(savedSettings.shortBreak) shortBreak = savedSettings.shortBreak * 60;
+        if(savedSettings.longBreak) longBreak = savedSettings.longBreak * 60;
+        
+        // 初始化输入框
+        document.getElementById('workTime').value = Math.floor(workDuration / 60);
+        document.getElementById('shortBreak').value = Math.floor(shortBreak / 60);
+        document.getElementById('longBreak').value = Math.floor(longBreak / 60);
+        
+        let currentTime = workDuration;
+        let timerId = null;
+        let isWorking = true;
+        let completedSessions = 0;
+        let interruptedCount = 0;
+
+        // 保存设置功能
+        document.getElementById('saveSettings').addEventListener('click', () => {
+            const workTime = parseInt(document.getElementById('workTime').value);
+            const shortBreak = parseInt(document.getElementById('shortBreak').value);
+            const longBreak = parseInt(document.getElementById('longBreak').value);
+            
+            if(!workTime || workTime < 1 || workTime > 120) {
+                alert('工作时间需在1-120分钟之间');
+                return;
+            }
+            
+            localStorage.setItem('pomodoroSettings', JSON.stringify({
+                workTime,
+                shortBreak,
+                longBreak
+            }));
+            
+            // 更新当前计时参数
+            workDuration = workTime * 60;
+            this.shortBreak = shortBreak * 60;
+            this.longBreak = longBreak * 60;
+            currentTime = workDuration;
+            updateDisplay();
+            alert('设置已保存！');
+        });
+
+        // 与倒计时器相似的本地存储逻辑
+        const stats = JSON.parse(localStorage.getItem('pomodoroStats')) || {
+            completed: 0,
+            interrupted: 0
+        };
+
+        // 初始化显示
+        updateDisplay();
+        
+        // 事件监听
+        document.getElementById('startBtn').addEventListener('click', startTimer);
+        document.getElementById('pauseBtn').addEventListener('click', togglePause);
+        document.getElementById('resetBtn').addEventListener('click', resetTimer);
+
+        // 核心功能函数
+        function startTimer() {
+            if (!timerId) {
+                timerId = setInterval(updateTimer, 1000);
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('pauseBtn').disabled = false;
+                document.getElementById('resetBtn').disabled = false;
+            }
+        }
+
+        function togglePause() {
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+                document.getElementById('pauseBtn').innerHTML = '<i class="bi bi-play-circle"></i> 继续';
+            } else {
+                startTimer();
+                document.getElementById('pauseBtn').innerHTML = '<i class="bi bi-pause-circle"></i> 暂停';
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            currentTime = isWorking ? workDuration : (completedSessions % 4 === 0 ? longBreak : shortBreak);
+            updateDisplay();
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = true;
+            interruptedCount++;
+            saveStats();
+        }
+
+        function updateTimer() {
+            currentTime--;
+            if (currentTime <= 0) {
+                clearInterval(timerId);
+                timerId = null;
+                completedSessions++;
+                isWorking = !isWorking;
+                switchPhase();
+                triggerNotification();
+            }
+            updateDisplay();
+        }
+
+        function switchPhase() {
+            const phaseBadge = document.querySelector('.phase-badge');
+            if (isWorking) {
+                currentTime = workDuration;
+                phaseBadge.className = 'badge phase-badge bg-success';
+                phaseBadge.textContent = '工作时间';
+            } else {
+                currentTime = completedSessions % 4 === 0 ? longBreak : shortBreak;
+                phaseBadge.className = 'badge phase-badge bg-info';
+                phaseBadge.textContent = completedSessions % 4 === 0 ? '长休息' : '短休息';
+            }
+            startTimer();
+        }
+
+        function updateDisplay() {
+            const minutes = Math.floor(currentTime / 60);
+            const seconds = currentTime % 60;
+            document.getElementById('timer-display').textContent = 
+                `${padZero(minutes)}:${padZero(seconds)}`;
+            
+            // 更新进度条
+            const totalTime = isWorking ? workDuration : (completedSessions % 4 === 0 ? longBreak : shortBreak);
+            const progress = ((totalTime - currentTime) / totalTime) * 100;
+            document.getElementById('progress-bar').style.width = progress + '%';
+            
+            // 更新统计
+            document.getElementById('completedCount').textContent = stats.completed;
+            document.getElementById('interruptedCount').textContent = stats.interrupted;
+        }
+
+        function padZero(num) {
+            return num.toString().padStart(2, '0');
+        }
+
+        function triggerNotification() {
+            const alertSound = document.getElementById('alert-sound');
+            alertSound.play();
+            if (Notification.permission === 'granted') {
+                new Notification(isWorking ? '工作时间开始！' : '休息时间到！', {
+                    body: isWorking ? '专注工作25分钟' : '请放松休息',
+                    icon: '../media/notification.png'
+                });
+            }
+        }
+
+        function saveStats() {
+            stats.completed = completedSessions;
+            stats.interrupted = interruptedCount;
+            localStorage.setItem('pomodoroStats', JSON.stringify(stats));
+        }
+    </script>
+</body>
+</html>

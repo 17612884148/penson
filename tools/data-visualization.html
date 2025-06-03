@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据可视化 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+    <style>
+        .chart-card { height: 500px; transition: transform 0.2s; }
+        .config-panel { max-height: 600px; overflow-y: auto; }
+        .data-preview { background: #f8f9fa; border-radius: 8px; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-bar-chart-line me-2 text-primary"></i>智能数据可视化</h1>
+                <p class="lead">支持多源数据导入，动态配置可视化方案</p>
+            </div>
+        </div>
+
+        <!-- 主可视化区 -->
+        <div class="row">
+            <div class="col-md-9">
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow-sm chart-card">
+                            <div class="card-body">
+                                <div id="mainChart" style="width: 100%;height:100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm sub-chart">
+                            <div class="card-body">
+                                <div id="subChart1" style="width:100%;height:250px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm sub-chart">
+                            <div class="card-body">
+                                <div id="subChart2" style="width:100%;height:250px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm sub-chart">
+                            <div class="card-body">
+                                <div id="subChart3" style="width:100%;height:250px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <div class="card-body">
+                        <div id="mainChart" style="width: 100%;height:100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 配置面板 -->
+            <div class="col-md-3">
+                <div class="card shadow-sm config-panel mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-palette"></i> 主题配置</h5>
+                        <div class="mb-3">
+                            <label class="form-label">主题颜色</label>
+                            <input type="color" class="form-control form-control-color" id="themeColor" value="#0d6efd">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">动画时长</label>
+                            <input type="range" class="form-range" id="animationDuration" min="0" max="2000" value="500">
+                        </div>
+                    </div>
+                </div>
+                <div class="card shadow-sm config-panel">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3"><i class="bi bi-sliders"></i> 图表配置</h5>
+                        <div class="mb-3">
+                            <label class="form-label">图表类型</label>
+                            <select class="form-select" id="chartType">
+                                <option value="line">折线图</option>
+                                <option value="bar">柱状图</option>
+                                <option value="pie">饼图</option>
+                                <option value="scatter">散点图</option>
+                                <option value="heatmap">热力图</option>
+                                <option value="radar">雷达图</option>
+                                <option value="sankey">桑基图</option>
+                                <option value="boxplot">箱线图</option>
+                                <option value="tree">树图</option>
+                                <option value="treemap">矩形树图</option>
+                                <option value="graph">关系图</option>
+                            </select>
+                        </div>
+                        <div class="btn-group w-100 mb-3" role="group">
+    <button class="btn btn-primary" onclick="updateChart()">
+        <i class="bi bi-arrow-clockwise"></i> 更新图表
+    </button>
+    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+        <i class="bi bi-download"></i> 导出
+    </button>
+    <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="#" onclick="exportChart('png')">PNG 图片</a></li>
+        <li><a class="dropdown-item" href="#" onclick="exportChart('svg')">SVG 矢量图</a></li>
+        <li><a class="dropdown-item" href="#" onclick="exportChart('pdf')">PDF 文档</a></li>
+    </ul>
+</div>
+                            <i class="bi bi-arrow-clockwise"></i> 更新图表
+                        </button>
+                        <div class="data-preview p-3 mb-3">
+                            <h6><i class="bi bi-table"></i> 数据预览</h6>
+                            <div id="dataPreview" class="small text-muted"></div>
+                        </div>
+                        <div class="mb-3">
+    <label class="form-label">数据筛选条件</label>
+    <input type="text" class="form-control" id="dataFilter" placeholder="例如：value > 100">
+</div>
+<button class="btn btn-outline-primary w-100 mb-3" onclick="applyFilter()">
+    <i class="bi bi-funnel"></i> 应用筛选
+</button>
+<input type="file" class="form-control" id="dataInput" accept=".csv,.json">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/bootstrap.bundle.min.js"></script>
+    <script>
+        let myChart = null;
+let subCharts = [];
+let currentTheme = {
+    color: '#0d6efd',
+    animationDuration: 500
+};
+        let dataset = JSON.parse(localStorage.getItem('visualizationData')) || [];
+
+        // 初始化图表
+        function initChart() {
+            const chartDom = document.getElementById('mainChart');
+            myChart = echarts.init(chartDom);
+            updateChart();
+        }
+
+        // 文件导入处理
+        document.getElementById('dataInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    if (file.name.endsWith('.csv')) {
+                        dataset = parseCSV(evt.target.result);
+                    } else if (file.name.endsWith('.json')) {
+                        dataset = JSON.parse(evt.target.result);
+                    }
+                    localStorage.setItem('visualizationData', JSON.stringify(dataset));
+                    updateDataPreview();
+                    updateChart();
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        // CSV解析函数
+        function parseCSV(csvText) {
+            const lines = csvText.split('\n').filter(line => line.trim());
+            const headers = lines[0].split(',').map(h => h.trim());
+            return [headers, ...lines.slice(1).map(line => {
+                const values = line.split(',');
+                return headers.reduce((obj, key, index) => {
+                    obj[key] = isNaN(values[index]) ? values[index] : parseFloat(values[index]);
+                    return obj;
+                }, {});
+            })];
+        }
+
+        // 数据预览更新
+        function updateDataPreview() {
+            const preview = document.getElementById('dataPreview');
+            preview.innerHTML = dataset.slice(0, 5).map(item => 
+                `<div class="text-truncate">${JSON.stringify(item)}</div>`
+            ).join('');
+        }
+
+        // 数据筛选功能
+function applyFilter() {
+    const filterText = document.getElementById('dataFilter').value;
+    try {
+        const filteredData = dataset.filter(item => {
+            return eval(`(${JSON.stringify(item)}) => ${filterText}`);
+        });
+        dataset = filteredData;
+        updateChart();
+    } catch (e) {
+        alert('筛选条件错误: ' + e.message);
+    }
+}
+
+// 图表导出功能
+function exportChart(format) {
+    const option = myChart.getOption();
+    const filename = `chart_${new Date().toISOString()}`;
+    
+    if (format === 'png' || format === 'svg') {
+        const img = new Image();
+        img.src = myChart.getDataURL({ type: format });
+        img.onload = () => {
+            const link = document.createElement('a');
+            link.download = `${filename}.${format}`;
+            link.href = img.src;
+            link.click();
+        };
+    } else if (format === 'pdf') {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF();
+        const canvas = myChart.getDom().querySelector('canvas');
+        const imgData = canvas.toDataURL('image/png');
+        pdf.addImage(imgData, 'PNG', 10, 10, 180, 100);
+        pdf.save(`${filename}.pdf`);
+    }
+}
+
+// 增强版图表配置
+        function updateChart() {
+            const chartType = document.getElementById('chartType').value;
+            const option = {
+                title: { text: '数据可视化', left: 'center' },
+                tooltip: { trigger: 'axis' },
+                legend: { top: 30 },
+                dataset: { source: dataset },
+                xAxis: { type: 'category', axisLabel: { rotate: 45 } },
+                yAxis: { type: 'value' },
+                series: [{
+                    type: chartType,
+                    itemStyle: { borderRadius: [5, 5, 0, 0] },
+                    barWidth: '60%',
+                    emphasis: { focus: 'series' }
+                }],
+                dataZoom: [{ type: 'slider' }]
+            };
+            myChart.setOption(option);
+
+// 更新子图表
+subCharts.forEach((chart, index) => {
+    const subOption = JSON.parse(JSON.stringify(option));
+    subOption.series[0].type = ['pie','line','bar'][index % 3];
+    chart.setOption(subOption);
+});
+        }
+
+        // 与其他工具数据联动
+        function syncWithTools() {
+            // 同步任务统计数据
+            const taskData = JSON.parse(localStorage.getItem('tasks') || '[]');
+            const statusCount = taskData.reduce((acc, task) => {
+                acc[task.completed ? '已完成' : '未完成'] = (acc[task.completed ? '已完成' : '未完成'] || 0) + 1;
+                return acc;
+            }, {});
+            
+            // 同步转换历史
+            const convertHistory = JSON.parse(localStorage.getItem('conversionHistory') || '[]');
+            
+            dataset = [
+                ['类别', '任务统计', '转换次数'],
+                ['已完成', statusCount.已完成 || 0, convertHistory.length],
+                ['未完成', statusCount.未完成 || 0, 0]
+            ];
+            updateChart();
+        }
+
+        // 初始化执行
+        initChart();
+        setInterval(syncWithTools, 5000);
+        document.getElementById('syncBtn').addEventListener('click', syncWithTools);
+    </script>
+</body>
+</html>

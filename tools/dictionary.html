@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能词典 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .dictionary-card { min-height: 400px; }
+        .pronunciation-btn { cursor: pointer; }
+        .example-sentence { border-left: 3px solid #0d6efd; }
+        #word-frequency-chart { height: 250px; }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-journal-bookmark me-2 text-primary"></i>智能词典</h1>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="word-input" placeholder="输入要查询的单词/短语">
+                    <button class="btn btn-primary" type="button" id="search-btn">
+                        <i class="bi bi-search"></i> 查询
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" id="pronunciation-btn">
+                        <i class="bi bi-megaphone"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card shadow-sm dictionary-card mb-4">
+                    <div class="card-body">
+                        <div id="definition-panel" class="mb-4"></div>
+                        <div id="example-panel" class="mb-4"></div>
+                        <div id="synonym-panel"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-graph-up"></i> 词频分析</h5>
+                        <div id="word-frequency-chart"></div>
+                    </div>
+                </div>
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-journal-bookmark"></i> 生词本</h5>
+                        <div id="vocabulary-list"></div>
+                        <button class="btn btn-outline-primary w-100 mt-3" id="save-vocab-btn">
+                            <i class="bi bi-bookmark-plus"></i> 保存到生词本
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/bootstrap.bundle.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const DICT_API = 'https://api.dictionaryapi.dev/api/v2/entries/en/';
+        const YOUDAO_API = 'https://openapi.youdao.com/api';
+        const TTS_API = 'https://api.voicerss.org/';
+        const YOUDAO_KEY = 'your-youdao-appkey';
+        const YOUDAO_SECRET = 'your-youdao-secret';
+        
+        let myChart = echarts.init(document.getElementById('word-frequency-chart'));
+        
+        // 初始化生词本
+        let vocabularyList = JSON.parse(localStorage.getItem('vocabulary')) || {};
+        updateVocabularyList();
+        
+
+        
+        async function searchWord() {
+            const word = document.getElementById('word-input').value.trim();
+            if (!word) {
+                showError('请输入要查询的单词');
+                return;
+            }
+            
+            try {
+                const response = await axios.get(`${DICT_API}${word}`);
+                if (!response.data || response.data.length === 0) {
+                    throw new Error('未找到该单词');
+                }
+                const data = response.data[0];
+                showDefinition(data);
+                showExamples(data);
+                showSynonyms(data);
+                updateFrequencyChart(data);
+                fetchChineseTranslation(word);
+            } catch (error) {
+                console.error('API请求失败:', error);
+                showError(error.message || '查询失败，请检查网络连接');
+            }
+        }
+        
+        function showDefinition(data) {
+            const definitionPanel = document.getElementById('definition-panel');
+            definitionPanel.innerHTML = data.meanings.map(meaning => 
+                `<div class="mb-3">
+                    <h5><i class="bi bi-bookmark-star"></i> ${meaning.partOfSpeech}</h5>
+                    ${meaning.definitions.map(d => `
+                        <p class="mb-1">
+                            <span class="text-primary">EN</span> • ${d.definition}
+                            ${d.zh_definition ? `<div class="ms-3 text-success"><span class="text-secondary">CN</span> • ${d.zh_definition}</div>` : ''}
+                        </p>`).join('')}
+                </div>`
+            ).join('');
+        }
+
+        async function fetchChineseTranslation(word) {
+            try {
+                const salt = Date.now();
+                const sign = CryptoJS.SHA1(YOUDAO_KEY + word + salt + YOUDAO_SECRET).toString();
+                
+                const response = await axios.get(YOUDAO_API, {
+                    params: {
+                        q: word,
+                        appKey: YOUDAO_KEY,
+                        salt: salt,
+                        sign: sign,
+                        from: 'en',
+                        to: 'zh-CHS'
+                    }
+                });
+
+                if (response.data.errorCode === '0') {
+                    const translations = response.data.translation;
+                    document.querySelectorAll('.zh-definition-placeholder').forEach((el, index) => {
+                        if (translations[index]) {
+                            el.innerHTML = `<span class="text-secondary">CN</span> • ${translations[index]}`;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('中文翻译获取失败:', error);
+            }
+        }
+        
+        function showExamples(data) {
+            const examplePanel = document.getElementById('example-panel');
+            const examples = data.meanings.flatMap(m => 
+                m.definitions.filter(d => d.example).map(d => d.example)
+            );
+            
+            examplePanel.innerHTML = examples.slice(0, 3).map(ex => 
+                `<div class="example-sentence p-3 mb-3 bg-light">
+                    <i class="bi bi-chat-quote"></i> ${ex}
+                </div>`
+            ).join('');
+        }
+
+        function showSynonyms(data) {
+            const synonymPanel = document.getElementById('synonym-panel');
+            const synonyms = [...new Set(data.meanings.flatMap(m => 
+                m.definitions.flatMap(d => d.synonyms || [])
+            ))].slice(0, 5);
+            
+            synonymPanel.innerHTML = synonyms.length ? 
+                `<h5><i class="bi bi-diagram-3"></i> 相关词汇</h5>
+                ${synonyms.map(word => 
+                    `<span class="badge bg-primary me-2 mb-2" style="cursor:pointer" 
+                        onclick="document.getElementById('word-input').value='${word}';searchWord()">
+                        ${word}
+                    </span>`
+                ).join('')}` : '';
+        }
+
+        function updateFrequencyChart(data) {
+            const option = {
+                tooltip: { trigger: 'axis' },
+                xAxis: { type: 'category', data: ['常用度'] },
+                yAxis: { type: 'value' },
+                series: [{
+                    data: [data.frequency || 0.5],
+                    type: 'bar',
+                    itemStyle: { color: '#0d6efd' }
+                }]
+            };
+            myChart.setOption(option);
+        }
+
+        function saveToVocabulary() {
+            const word = document.getElementById('word-input').value.trim();
+            const definitionPanel = document.getElementById('definition-panel').innerText;
+            if (word && !vocabularyList[word]) {
+                vocabularyList[word] = {
+                    en: word,
+                    zh: definitionPanel.match(/CN • (.+)/)?.[1] || '',
+                    date: new Date().toISOString()
+                };
+                localStorage.setItem('vocabulary', JSON.stringify(vocabularyList));
+                updateVocabularyList();
+            }
+        }
+
+        function removeVocabulary(word) {
+            vocabularyList = vocabularyList.filter(w => w !== word);
+            localStorage.setItem('vocabulary', JSON.stringify(vocabularyList));
+            updateVocabularyList();
+        }
+
+        document.getElementById('pronunciation-btn').addEventListener('click', () => {
+            const word = document.getElementById('word-input').value.trim();
+            if (word) {
+                new Audio(`https://api.dictionaryapi.dev/media/pronunciations/en/${word}-us.mp3`).play();
+            }
+        });
+
+        function showError(message) {
+            const definitionPanel = document.getElementById('definition-panel');
+            definitionPanel.innerHTML = 
+                `<div class="alert alert-danger" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> ${message}
+                </div>`;
+        }
+        function updateVocabularyList() {
+            const list = document.getElementById('vocabulary-list');
+            list.innerHTML = vocabularyList.map(word => 
+                `<div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>${word}</span>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeVocabulary('${word}')">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>`
+            ).join('');
+        }
+
+        // 初始化事件监听
+        document.addEventListener('DOMContentLoaded', () => {
+            updateVocabularyList();
+            document.getElementById('search-btn').addEventListener('click', searchWord);
+            document.getElementById('save-vocab-btn').addEventListener('click', saveToVocabulary);
+            document.getElementById('pronunciation-btn').addEventListener('click', () => {
+                const word = document.getElementById('word-input').value.trim();
+                if (word) {
+                    new Audio(`https://api.dictionaryapi.dev/media/pronunciations/en/${word}-us.mp3`).play();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

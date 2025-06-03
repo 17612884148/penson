@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件格式转换 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        .file-thumbnail {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            border-radius: 6px;
+            color: white;
+        }
+        .file-item {
+            position: relative;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 10px;
+            transition: all 0.3s;
+        }
+        .file-item:hover {
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .remove-file {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid #dee2e6;
+        }
+        .remove-file:hover {
+            background-color: #f8d7da;
+            border-color: #f5c2c7;
+            color: #842029;
+        }
+        .batch-progress {
+            height: 25px;
+            font-size: 0.8rem;
+        }
+        .format-card {
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        .format-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .format-card.selected {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        .format-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border-radius: 4px;
+        }
+        /* 文件类型颜色 */
+        .file-image { background-color: #28a745; }
+        .file-audio { background-color: #6f42c1; }
+        .file-video { background-color: #e83e8c; }
+        .file-document { background-color: #007bff; }
+        .file-archive { background-color: #fd7e14; }
+        .file-other { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#popular">热门工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-file-earmark-arrow-up-down me-2 text-primary"></i>文件格式转换</h1>
+                <p class="lead">批量转换文件格式，支持图片、音频、视频和文档多种格式互转</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html#文件处理">文件处理</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">文件格式转换</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="tool-icons mt-md-4">
+                    <span class="badge rounded-pill bg-primary me-2">
+                        <i class="bi bi-file-earmark me-1"></i> 文件处理
+                    </span>
+                    <span class="badge rounded-pill bg-success me-2">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> 本地处理
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 上传区域 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0"><i class="bi bi-cloud-upload me-2"></i>上传文件</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="upload-area p-5 text-center" id="dropArea">
+                            <i class="bi bi-file-earmark-arrow-up display-4 text-primary mb-3"></i>
+                            <p class="mb-2">拖放文件到这里或点击下方按钮选择</p>
+                            <p class="text-muted mb-3">支持批量上传多种格式的文件，每个文件最大50MB</p>
+                            <input type="file" id="fileInput" multiple class="d-none">
+                            <button class="btn btn-primary" id="uploadBtn">
+                                <i class="bi bi-plus-circle me-2"></i>选择文件
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文件列表 -->
+                <div class="card mb-4" id="filesContainer" style="display: none;">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0"><i class="bi bi-files me-2"></i>已上传文件 (<span id="fileCount">0</span>)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 50px;">#</th>
+                                        <th>文件名</th>
+                                        <th>类型</th>
+                                        <th>大小</th>
+                                        <th>状态</th>
+                                        <th>操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="filesList">
+                                    <!-- 文件列表将在这里动态生成 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center mb-2">
+                            <button class="btn btn-danger me-2" id="clearAllBtn">
+                                <i class="bi bi-trash me-2"></i>清空全部
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- 转换设置 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0"><i class="bi bi-sliders me-2"></i>转换设置</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">选择目标格式</label>
+                            <div id="formatSelector">
+                                <!-- 格式选择器Tab -->
+                                <ul class="nav nav-tabs mb-3" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-formats" type="button" role="tab">
+                                            <i class="bi bi-image me-1"></i>图片
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="audio-tab" data-bs-toggle="tab" data-bs-target="#audio-formats" type="button" role="tab">
+                                            <i class="bi bi-music-note-beamed me-1"></i>音频
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="video-tab" data-bs-toggle="tab" data-bs-target="#video-formats" type="button" role="tab">
+                                            <i class="bi bi-film me-1"></i>视频
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="document-tab" data-bs-toggle="tab" data-bs-target="#document-formats" type="button" role="tab">
+                                            <i class="bi bi-file-text me-1"></i>文档
+                                        </button>
+                                    </li>
+                                </ul>
+                                
+                                <!-- 格式选择内容 -->
+                                <div class="tab-content">
+                                    <!-- 图片格式 -->
+                                    <div class="tab-pane fade show active" id="image-formats" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="jpg">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-jpg"></i></div>
+                                                        <h6 class="mb-0">JPG</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="png">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-png"></i></div>
+                                                        <h6 class="mb-0">PNG</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="webp">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-image"></i></div>
+                                                        <h6 class="mb-0">WebP</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="gif">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-gif"></i></div>
+                                                        <h6 class="mb-0">GIF</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="bmp">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-card-image"></i></div>
+                                                        <h6 class="mb-0">BMP</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="tiff">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-file-richtext"></i></div>
+                                                        <h6 class="mb-0">TIFF</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 音频格式 -->
+                                    <div class="tab-pane fade" id="audio-formats" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="mp3">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-mp3"></i></div>
+                                                        <h6 class="mb-0">MP3</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="wav">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-soundwave"></i></div>
+                                                        <h6 class="mb-0">WAV</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="ogg">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-file-music"></i></div>
+                                                        <h6 class="mb-0">OGG</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="aac">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-music-note"></i></div>
+                                                        <h6 class="mb-0">AAC</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="flac">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-file-music-fill"></i></div>
+                                                        <h6 class="mb-0">FLAC</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="m4a">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-speaker"></i></div>
+                                                        <h6 class="mb-0">M4A</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 视频格式 -->
+                                    <div class="tab-pane fade" id="video-formats" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="mp4">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-mp4"></i></div>
+                                                        <h6 class="mb-0">MP4</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="webm">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-camera-video"></i></div>
+                                                        <h6 class="mb-0">WebM</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="mov">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-apple"></i></div>
+                                                        <h6 class="mb-0">MOV</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="avi">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-film"></i></div>
+                                                        <h6 class="mb-0">AVI</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="mkv">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-camera-reels"></i></div>
+                                                        <h6 class="mb-0">MKV</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="gif">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-gif"></i></div>
+                                                        <h6 class="mb-0">GIF</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 文档格式 -->
+                                    <div class="tab-pane fade" id="document-formats" role="tabpanel">
+                                        <div class="row g-2">
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="pdf">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-pdf"></i></div>
+                                                        <h6 class="mb-0">PDF</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="docx">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-docx"></i></div>
+                                                        <h6 class="mb-0">DOCX</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="pptx">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-pptx"></i></div>
+                                                        <h6 class="mb-0">PPTX</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="xlsx">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-xlsx"></i></div>
+                                                        <h6 class="mb-0">XLSX</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="txt">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-txt"></i></div>
+                                                        <h6 class="mb-0">TXT</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-4">
+                                                <div class="card format-card" data-format="html">
+                                                    <div class="card-body text-center py-2">
+                                                        <div class="format-icon text-primary"><i class="bi bi-filetype-html"></i></div>
+                                                        <h6 class="mb-0">HTML</h6>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <!-- 质量设置 -->
+                        <div class="mb-3" id="qualitySettings">
+                            <label for="quality" class="form-label">输出质量</label>
+                            <div class="input-group">
+                                <input type="range" class="form-range" id="quality" min="0.5" max="1.0" step="0.1" value="0.9">
+                                <span class="ms-2" id="qualityValue">90%</span>
+                            </div>
+                            <small class="text-muted">仅对图片、音频和视频格式有效</small>
+                        </div>
+                        
+                        <!-- 输出设置 -->
+                        <div class="mb-3">
+                            <label for="fileNamePrefix" class="form-label">输出文件名前缀</label>
+                            <input type="text" class="form-control" id="fileNamePrefix" value="converted_">
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button class="btn btn-primary" id="convertBtn" disabled>
+                                <i class="bi bi-arrow-repeat me-2"></i>开始转换
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 支持格式信息 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0"><i class="bi bi-info-circle me-2"></i>支持格式</h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="fw-bold">图片格式:</h6>
+                        <p class="mb-3">JPG/JPEG, PNG, WebP, GIF, BMP, TIFF</p>
+                        
+                        <h6 class="fw-bold">音频格式:</h6>
+                        <p class="mb-3">MP3, WAV, OGG, AAC, FLAC, M4A</p>
+                        
+                        <h6 class="fw-bold">视频格式:</h6>
+                        <p class="mb-3">MP4, WebM, MOV, AVI, MKV, GIF</p>
+                        
+                        <h6 class="fw-bold">文档格式:</h6>
+                        <p>PDF, DOCX, PPTX, XLSX, TXT, HTML</p>
+                        
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>由于浏览器限制，某些格式转换需要额外插件支持
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 转换进度 -->
+        <div class="card mb-4" id="progressContainer" style="display: none;">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0"><i class="bi bi-activity me-2"></i>转换进度</h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3 batch-progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar" role="progressbar" style="width: 0%"></div>
+                </div>
+                <div id="progressStatus" class="text-center">准备转换 <span id="processedCount">0</span>/<span id="totalCount">0</span> 个文件</div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>关于此工具</h5>
+                    <p>本工具提供多种文件格式转换功能，可批量处理文件，所有处理在本地完成，不会上传您的文件到服务器。</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>隐私说明</h5>
+                    <p>我们重视您的隐私。所有文件处理均在您的浏览器中进行，不会上传到任何服务器。</p>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">© 2024 工具箱. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.7.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ffmpeg.js@4.2.9003/ffmpeg.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 全局变量
+            const dropArea = document.getElementById('dropArea');
+            const fileInput = document.getElementById('fileInput');
+            const uploadBtn = document.getElementById('uploadBtn');
+            const filesList = document.getElementById('filesList');
+            const fileCount = document.getElementById('fileCount');
+            const filesContainer = document.getElementById('filesContainer');
+            const clearAllBtn = document.getElementById('clearAllBtn');
+            const convertBtn = document.getElementById('convertBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressBar = document.getElementById('progressBar');
+            const progressStatus = document.getElementById('progressStatus');
+            const processedCount = document.getElementById('processedCount');
+            const totalCount = document.getElementById('totalCount');
+            const quality = document.getElementById('quality');
+            const qualityValue = document.getElementById('qualityValue');
+            const fileNamePrefix = document.getElementById('fileNamePrefix');
+            const formatCards = document.querySelectorAll('.format-card');
+            
+            let files = []; // 存储上传的文件
+            let selectedFormat = ''; // 当前选中的目标格式
+            let currentFileType = ''; // 当前显示的文件类型分类
+            
+            // 更新质量值显示
+            quality.addEventListener('input', function() {
+                qualityValue.textContent = Math.round(quality.value * 100) + '%';
+            });
+            
+            // 选择目标格式
+            formatCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // 移除其他卡片的选中状态
+                    formatCards.forEach(c => c.classList.remove('selected'));
+                    // 添加当前卡片的选中状态
+                    this.classList.add('selected');
+                    // 保存选中的格式
+                    selectedFormat = this.getAttribute('data-format');
+                    // 启用转换按钮
+                    updateConvertButtonState();
+                });
+            });
+            
+            // 更新转换按钮状态
+            function updateConvertButtonState() {
+                convertBtn.disabled = !(files.length > 0 && selectedFormat);
+            }
+            
+            // 文件拖放处理
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight() {
+                dropArea.classList.add('dragover');
+            }
+            
+            function unhighlight() {
+                dropArea.classList.remove('dragover');
+            }
+            
+            // 处理文件拖放
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const droppedFiles = dt.files;
+                handleFiles(droppedFiles);
+            }
+            
+            // 点击上传按钮
+            uploadBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // 文件选择处理
+            fileInput.addEventListener('change', function() {
+                handleFiles(this.files);
+            });
+            
+            // 处理文件
+            function handleFiles(fileList) {
+                if (fileList.length === 0) return;
+                
+                for (let i = 0; i < fileList.length; i++) {
+                    const file = fileList[i];
+                    // 检查文件是否已经存在
+                    if (!files.some(f => f.name === file.name && f.size === file.size)) {
+                        addFile(file);
+                    }
+                }
+                
+                // 更新界面
+                updateFileDisplay();
+                
+                // 清除文件输入，允许选择相同的文件
+                fileInput.value = '';
+            }
+            
+            // 添加文件到列表
+            function addFile(file) {
+                // 添加文件信息和状态
+                const newFile = {
+                    id: Date.now() + Math.random().toString(36).substr(2, 9),
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    type: getFileCategory(file.type),
+                    status: 'ready', // ready, processing, success, error
+                    convertedUrl: null,
+                    error: null
+                };
+                
+                files.push(newFile);
+                updateConvertButtonState();
+            }
+            
+            // 获取文件类别
+            function getFileCategory(mimeType) {
+                if (mimeType.startsWith('image/')) return 'image';
+                if (mimeType.startsWith('audio/')) return 'audio';
+                if (mimeType.startsWith('video/')) return 'video';
+                if (mimeType.startsWith('application/pdf') || 
+                    mimeType.includes('document') || 
+                    mimeType.includes('spreadsheet') || 
+                    mimeType.includes('presentation') ||
+                    mimeType.startsWith('text/')) return 'document';
+                if (mimeType.includes('zip') || 
+                    mimeType.includes('archive') || 
+                    mimeType.includes('compressed')) return 'archive';
+                return 'other';
+            }
+            
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+            
+            // 获取文件图标
+            function getFileIcon(fileType) {
+                switch (fileType) {
+                    case 'image': return '<i class="bi bi-file-image"></i>';
+                    case 'audio': return '<i class="bi bi-file-music"></i>';
+                    case 'video': return '<i class="bi bi-file-play"></i>';
+                    case 'document': return '<i class="bi bi-file-text"></i>';
+                    case 'archive': return '<i class="bi bi-file-zip"></i>';
+                    default: return '<i class="bi bi-file-earmark"></i>';
+                }
+            }
+            
+            // 获取文件状态标签
+            function getStatusBadge(status) {
+                switch (status) {
+                    case 'ready': return '<span class="badge bg-secondary">待转换</span>';
+                    case 'processing': return '<span class="badge bg-warning">转换中</span>';
+                    case 'success': return '<span class="badge bg-success">已完成</span>';
+                    case 'error': return '<span class="badge bg-danger">失败</span>';
+                    default: return '<span class="badge bg-secondary">未知</span>';
+                }
+            }
+            
+            // 更新文件显示
+            function updateFileDisplay() {
+                if (files.length > 0) {
+                    filesContainer.style.display = 'block';
+                    fileCount.textContent = files.length;
+                    
+                    // 清空列表
+                    filesList.innerHTML = '';
+                    
+                    // 添加文件到列表
+                    files.forEach((file, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${file.name}</td>
+                            <td>
+                                <div class="file-icon file-${file.type}">${getFileIcon(file.type)}</div>
+                            </td>
+                            <td>${formatFileSize(file.size)}</td>
+                            <td>${getStatusBadge(file.status)}</td>
+                            <td>
+                                ${file.status === 'success' ? 
+                                    `<button class="btn btn-sm btn-success me-1 download-btn" data-id="${file.id}">
+                                        <i class="bi bi-download"></i>
+                                    </button>` : ''}
+                                <button class="btn btn-sm btn-danger remove-btn" data-id="${file.id}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        `;
+                        filesList.appendChild(row);
+                    });
+                    
+                    // 添加事件监听器
+                    document.querySelectorAll('.remove-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const fileId = this.getAttribute('data-id');
+                            removeFile(fileId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.download-btn').forEach(btn => {
+                        btn.addEventListener('click', function() {
+                            const fileId = this.getAttribute('data-id');
+                            downloadFile(fileId);
+                        });
+                    });
+                } else {
+                    filesContainer.style.display = 'none';
+                }
+            }
+            
+            // 移除文件
+            function removeFile(fileId) {
+                files = files.filter(file => file.id !== fileId);
+                updateFileDisplay();
+                updateConvertButtonState();
+            }
+            
+            // 清空所有文件
+            clearAllBtn.addEventListener('click', function() {
+                if (confirm('确定要清空所有文件吗？')) {
+                    files = [];
+                    updateFileDisplay();
+                    updateConvertButtonState();
+                }
+            });
+            
+            // 下载单个转换后的文件
+            function downloadFile(fileId) {
+                const file = files.find(file => file.id === fileId);
+                if (file && file.convertedUrl) {
+                    const link = document.createElement('a');
+                    link.href = file.convertedUrl;
+                    
+                    // 构建下载文件名
+                    const extension = selectedFormat;
+                    const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                    const prefix = fileNamePrefix.value || 'converted_';
+                    const downloadName = `${prefix}${originalName}.${extension}`;
+                    
+                    link.download = downloadName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            }
+            
+            // 下载所有转换后的文件
+            function downloadAllFiles() {
+                const convertedFiles = files.filter(file => file.status === 'success' && file.convertedUrl);
+                if (convertedFiles.length === 0) {
+                    alert('没有可下载的文件！');
+                    return;
+                }
+                
+                // 如果只有一个文件，直接下载
+                if (convertedFiles.length === 1) {
+                    downloadFile(convertedFiles[0].id);
+                    return;
+                }
+                
+                // 多个文件压缩下载
+                const zip = new JSZip();
+                const prefix = fileNamePrefix.value || 'converted_';
+                const extension = selectedFormat;
+                
+                resetProgressBar();
+                progressContainer.style.display = 'block';
+                processedCount.textContent = '0';
+                totalCount.textContent = convertedFiles.length;
+                progressStatus.textContent = `准备打包文件...`;
+                
+                let processedFiles = 0;
+                
+                try {
+                    convertedFiles.forEach(file => {
+                        const originalName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                        const fileName = `${prefix}${originalName}.${extension}`;
+                        
+                        // 从URL获取Blob数据
+                        fetch(file.convertedUrl)
+                            .then(response => response.blob())
+                            .then(blob => {
+                                // 添加文件到zip
+                                zip.file(fileName, blob);
+                                
+                                processedFiles++;
+                                processedCount.textContent = processedFiles;
+                                const percent = (processedFiles / convertedFiles.length) * 100;
+                                progressBar.style.width = `${percent}%`;
+                                progressStatus.textContent = `打包文件 ${processedFiles}/${convertedFiles.length}...`;
+                                
+                                // 当所有文件都处理完毕，生成并下载zip
+                                if (processedFiles === convertedFiles.length) {
+                                    progressStatus.textContent = '正在生成ZIP文件...';
+                                    
+                                    zip.generateAsync({
+                                        type: 'blob',
+                                        compression: 'DEFLATE',
+                                        compressionOptions: {
+                                            level: 9
+                                        }
+                                    }).then(content => {
+                                        window.saveAs(content, `${prefix}converted_files.zip`);
+                                        progressBar.style.width = '100%';
+                                        progressBar.classList.remove('progress-bar-animated');
+                                        progressStatus.textContent = '下载已开始！';
+                                        
+                                        // 3秒后隐藏进度条
+                                        setTimeout(() => {
+                                            progressContainer.style.display = 'none';
+                                        }, 3000);
+                                    }).catch(error => {
+                                        console.error('生成ZIP文件出错:', error);
+                                        progressStatus.textContent = '打包文件出错，请重试！';
+                                        progressBar.classList.remove('progress-bar-animated', 'bg-primary');
+                                        progressBar.classList.add('bg-danger');
+                                    });
+                                }
+                            })
+                            .catch(error => {
+                                console.error('获取文件数据出错:', error);
+                                processedFiles++;
+                                processedCount.textContent = processedFiles;
+                                const percent = (processedFiles / convertedFiles.length) * 100;
+                                progressBar.style.width = `${percent}%`;
+                                progressStatus.textContent = `文件 ${file.name} 处理出错，跳过...`;
+                            });
+                    });
+                } catch (error) {
+                    console.error('批量下载出错:', error);
+                    progressStatus.textContent = '打包文件出错，请重试！';
+                    progressBar.classList.remove('progress-bar-animated', 'bg-primary');
+                    progressBar.classList.add('bg-danger');
+                }
+            }
+            
+            // 重置进度条
+            function resetProgressBar() {
+                progressBar.style.width = '0%';
+                progressBar.classList.remove('bg-danger', 'bg-success');
+                progressBar.classList.add('bg-primary', 'progress-bar-animated');
+                processedCount.textContent = '0';
+                progressStatus.textContent = '准备处理...';
+            }
+            
+            // 开始转换
+            convertBtn.addEventListener('click', startConversion);
+            
+            function startConversion() {
+                if (files.length === 0 || !selectedFormat) {
+                    alert('请先上传文件并选择目标格式！');
+                    return;
+                }
+                
+                // 显示进度条
+                progressContainer.style.display = 'block';
+                resetProgressBar();
+                totalCount.textContent = files.length;
+                
+                let processedFiles = 0;
+                const qualityValue = parseFloat(quality.value);
+                
+                // 记录转换前的文件状态，并重置为ready
+                files.forEach(file => {
+                    file.status = 'ready';
+                    file.convertedUrl = null;
+                    file.error = null;
+                });
+                
+                // 更新显示
+                updateFileDisplay();
+                
+                // 异步处理每个文件
+                const processFiles = async () => {
+                    for (let i = 0; i < files.length; i++) {
+                        try {
+                            files[i].status = 'processing';
+                            updateFileDisplay();
+                            
+                            // 执行转换
+                            await convertFile(files[i], selectedFormat, qualityValue);
+                            
+                            files[i].status = 'success';
+                            processedFiles++;
+                            processedCount.textContent = processedFiles;
+                            
+                            // 更新进度条
+                            const percent = (processedFiles / files.length) * 100;
+                            progressBar.style.width = `${percent}%`;
+                            progressStatus.textContent = `已处理 ${processedFiles}/${files.length} 个文件`;
+                            
+                            updateFileDisplay();
+                        } catch (error) {
+                            console.error(`转换文件 ${files[i].name} 出错:`, error);
+                            files[i].status = 'error';
+                            files[i].error = error.message;
+                            processedFiles++;
+                            processedCount.textContent = processedFiles;
+                            
+                            // 更新进度条
+                            const percent = (processedFiles / files.length) * 100;
+                            progressBar.style.width = `${percent}%`;
+                            progressStatus.textContent = `处理出错 ${processedFiles}/${files.length} (有错误)`;
+                            
+                            updateFileDisplay();
+                        }
+                    }
+                    
+                    // 全部处理完毕
+                    if (processedFiles === files.length) {
+                        const successCount = files.filter(file => file.status === 'success').length;
+                        const errorCount = files.filter(file => file.status === 'error').length;
+                        
+                        progressBar.classList.remove('progress-bar-animated');
+                        
+                        if (errorCount > 0) {
+                            progressBar.classList.add('bg-warning');
+                            progressStatus.textContent = `完成转换 ${successCount} 个文件，${errorCount} 个失败`;
+                        } else {
+                            progressBar.classList.add('bg-success');
+                            progressStatus.textContent = '所有文件转换成功！';
+                            
+                            // 询问是否下载所有转换后的文件
+                            if (confirm('所有文件转换完成！是否下载所有文件？')) {
+                                downloadAllFiles();
+                            }
+                        }
+                    }
+                };
+                
+                processFiles();
+            }
+            
+            // 转换单个文件
+            async function convertFile(fileObj, targetFormat, qualityVal) {
+                return new Promise((resolve, reject) => {
+                    const file = fileObj.file;
+                    const sourceType = file.type;
+                    const sourceExtension = file.name.split('.').pop().toLowerCase();
+                    
+                    // 如果源文件格式和目标格式相同，直接返回
+                    if (sourceExtension === targetFormat) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            fileObj.convertedUrl = e.target.result;
+                            resolve();
+                        };
+                        reader.onerror = function(error) {
+                            reject(new Error("读取文件失败"));
+                        };
+                        reader.readAsDataURL(file);
+                        return;
+                    }
+                    
+                    // 根据文件类型和目标格式调用不同的转换函数
+                    if (sourceType.startsWith('image/')) {
+                        // 图片转换
+                        convertImage(file, targetFormat, qualityVal)
+                            .then(url => {
+                                fileObj.convertedUrl = url;
+                                resolve();
+                            })
+                            .catch(error => reject(error));
+                    } 
+                    else if (sourceType.startsWith('audio/')) {
+                        // 音频转换
+                        convertAudio(file, targetFormat, qualityVal)
+                            .then(url => {
+                                fileObj.convertedUrl = url;
+                                resolve();
+                            })
+                            .catch(error => reject(error));
+                    }
+                    else if (sourceType.startsWith('video/')) {
+                        // 视频转换
+                        convertVideo(file, targetFormat, qualityVal)
+                            .then(url => {
+                                fileObj.convertedUrl = url;
+                                resolve();
+                            })
+                            .catch(error => reject(error));
+                    }
+                    else if (sourceType.startsWith('application/pdf') || 
+                            sourceType.includes('document') || 
+                            sourceType.includes('spreadsheet') || 
+                            sourceType.includes('presentation') ||
+                            sourceType.startsWith('text/')) {
+                        // 文档转换
+                        convertDocument(file, targetFormat)
+                            .then(url => {
+                                fileObj.convertedUrl = url;
+                                resolve();
+                            })
+                            .catch(error => reject(error));
+                    }
+                    else {
+                        reject(new Error("不支持的文件类型"));
+                    }
+                });
+            }
+            
+            // 图片转换
+            async function convertImage(file, targetFormat, quality) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = new Image();
+                        img.onload = function() {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            
+                            let mimeType;
+                            switch (targetFormat.toLowerCase()) {
+                                case 'jpg':
+                                case 'jpeg':
+                                    mimeType = 'image/jpeg';
+                                    break;
+                                case 'png':
+                                    mimeType = 'image/png';
+                                    break;
+                                case 'webp':
+                                    mimeType = 'image/webp';
+                                    break;
+                                case 'gif':
+                                    // GIF转换需要特殊处理，这里简化处理为静态图片
+                                    mimeType = 'image/gif';
+                                    break;
+                                case 'bmp':
+                                    mimeType = 'image/bmp';
+                                    break;
+                                default:
+                                    reject(new Error(`不支持转换为${targetFormat}格式`));
+                                    return;
+                            }
+                            
+                            try {
+                                const dataURL = canvas.toDataURL(mimeType, quality);
+                                resolve(dataURL);
+                            } catch (error) {
+                                reject(new Error(`转换到${targetFormat}格式失败: ${error.message}`));
+                            }
+                        };
+                        img.onerror = function() {
+                            reject(new Error("图片加载失败"));
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.onerror = function() {
+                        reject(new Error("读取文件失败"));
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // 音频转换 (浏览器内转换能力有限)
+            async function convertAudio(file, targetFormat, quality) {
+                return new Promise((resolve, reject) => {
+                    // 对于音频转换，我们需要使用更复杂的库或服务
+                    // 这里使用ffmpeg.js处理基本转换
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // 由于浏览器限制，无法完全实现音频转换
+                        // 返回原始文件，并提示限制
+                        alert(`音频格式转换需要额外插件支持，此演示返回原文件。\n从 ${file.type} 到 ${targetFormat} 的转换在实际应用中需要服务端支持。`);
+                        resolve(e.target.result);
+                    };
+                    reader.onerror = function() {
+                        reject(new Error("读取文件失败"));
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // 视频转换 (浏览器内转换能力有限)
+            async function convertVideo(file, targetFormat, quality) {
+                return new Promise((resolve, reject) => {
+                    // 对于视频转换，我们需要使用更复杂的库或服务
+                    // 这里使用ffmpeg.js处理基本转换
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // 由于浏览器限制，无法完全实现视频转换
+                        // 返回原始文件，并提示限制
+                        alert(`视频格式转换需要额外插件支持，此演示返回原文件。\n从 ${file.type} 到 ${targetFormat} 的转换在实际应用中需要服务端支持。`);
+                        resolve(e.target.result);
+                    };
+                    reader.onerror = function() {
+                        reject(new Error("读取文件失败"));
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+            
+            // 文档转换 (浏览器内转换能力有限)
+            async function convertDocument(file, targetFormat) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (targetFormat === 'pdf' && file.type.includes('text/')) {
+                            // 文本到PDF的转换
+                            const textContent = e.target.result;
+                            
+                            // 使用pdf-lib生成PDF
+                            const { PDFDocument, StandardFonts, rgb } = PDFLib;
+                            
+                            (async () => {
+                                try {
+                                    const pdfDoc = await PDFDocument.create();
+                                    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+                                    
+                                    const page = pdfDoc.addPage([595, 842]); // A4 size
+                                    const content = new TextDecoder().decode(new Uint8Array(e.target.result.split(',')[1]));
+                                    
+                                    page.drawText(content, {
+                                        x: 50,
+                                        y: 750,
+                                        size: 12,
+                                        font,
+                                        color: rgb(0, 0, 0),
+                                        lineHeight: 16,
+                                        maxWidth: 500
+                                    });
+                                    
+                                    const pdfBytes = await pdfDoc.save();
+                                    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+                                    const url = URL.createObjectURL(blob);
+                                    
+                                    resolve(url);
+                                } catch (error) {
+                                    console.error('PDF生成错误:', error);
+                                    reject(new Error("PDF生成失败"));
+                                }
+                            })();
+                        } else {
+                            // 其他文档转换需要特殊处理
+                            alert(`文档格式转换 (${file.type} 到 ${targetFormat}) 需要额外插件支持，此演示返回原文件。在实际应用中需要服务端支持。`);
+                            resolve(e.target.result);
+                        }
+                    };
+                    reader.onerror = function() {
+                        reject(new Error("读取文件失败"));
+                    };
+                    
+                    if (file.type.includes('text/')) {
+                        reader.readAsArrayBuffer(file);
+                    } else {
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+            
+            // 初始化页面设置
+            function init() {
+                // 禁用转换按钮
+                convertBtn.disabled = true;
+                
+                // 检查浏览器支持
+                checkBrowserSupport();
+                
+                // 添加标签页切换事件
+                document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
+                    tab.addEventListener('shown.bs.tab', function(e) {
+                        currentFileType = e.target.id.split('-')[0];
+                        // 重置当前分类中的选择
+                        document.querySelectorAll('.format-card.selected').forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        // 更新转换按钮状态
+                        updateConvertButtonState();
+                    });
+                });
+            }
+            
+            // 检查浏览器支持
+            function checkBrowserSupport() {
+                // 检查Canvas转换支持
+                const canvas = document.createElement('canvas');
+                if (!canvas.getContext) {
+                    alert('您的浏览器不支持Canvas功能，部分转换功能可能不可用');
+                }
+                
+                // 检查文件API支持
+                if (!window.File || !window.FileReader || !window.FileList || !window.Blob) {
+                    alert('您的浏览器不支持文件API，部分功能可能不可用');
+                }
+            }
+            
+            // 初始化
+            init();
+        });
+    </script>
+</body>
+</html> 

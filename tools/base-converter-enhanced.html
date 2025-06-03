@@ -1,0 +1,2200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高级进制转换器 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .converter-card { 
+            transition: transform 0.2s; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .converter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        .bit-visualization { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 15px;
+            overflow-x: auto;
+        }
+        .bit-box {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            line-height: 30px;
+            margin: 2px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .bit-box:hover {
+            transform: scale(1.1);
+        }
+        .bit-box.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .bit-group {
+            display: inline-block;
+            border-right: 1px dashed #ccc;
+            padding: 0 5px;
+        }
+        .bit-group:last-child {
+            border-right: none;
+        }
+        .history-item {
+            padding: 10px;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .history-item:hover { 
+            background-color: #f8f9fa; 
+        }
+        .conversion-mode {
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .mode-selector .btn {
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .custom-base-input {
+            max-width: 100px;
+            display: inline-block;
+        }
+        .binary-visualization {
+            font-family: monospace;
+            font-size: 16px;
+            letter-spacing: 1px;
+        }
+        .binary-group {
+            margin-right: 10px;
+            padding: 3px;
+            border-radius: 3px;
+        }
+        .copy-btn {
+            cursor: pointer;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #e9ecef;
+        }
+        .tab-content {
+            padding: 20px 0;
+        }
+        .expression-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .color-block {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+            border: 1px solid #ddd;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- 统一导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#popular">热门工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-calculator me-2 text-primary"></i>高级进制转换器</h1>
+                <p class="lead">支持2-36进制互转、字符编码转换、位运算和IEEE 754浮点数表示</p>
+            </div>
+        </div>
+
+        <!-- 主内容区 -->
+        <div class="row">
+            <div class="col-md-12 mb-4">
+                <!-- 模式选择 -->
+                <div class="card converter-card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>转换模式</h4>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="conversionTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="number-tab" data-bs-toggle="tab" data-bs-target="#number-content" type="button" role="tab">
+                                    <i class="bi bi-123 me-1"></i>数值转换
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab">
+                                    <i class="bi bi-fonts me-1"></i>文本编码
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="bit-tab" data-bs-toggle="tab" data-bs-target="#bit-content" type="button" role="tab">
+                                    <i class="bi bi-cpu me-1"></i>位运算
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="float-tab" data-bs-toggle="tab" data-bs-target="#float-content" type="button" role="tab">
+                                    <i class="bi bi-percent me-1"></i>浮点数
+                                </button>
+                            </li>
+                        </ul>
+                        
+                        <div class="tab-content" id="conversionTabContent">
+                            <!-- 数值转换 Tab -->
+                            <div class="tab-pane fade show active" id="number-content" role="tabpanel">
+                                <div class="row" id="converterInputs">
+                                    <!-- 动态生成进制输入框 -->
+                                </div>
+                                <div class="mt-3">
+                                    <button class="btn btn-outline-primary" id="addBaseBtn">
+                                        <i class="bi bi-plus-circle me-1"></i>添加自定义进制
+                                    </button>
+                                    <button class="btn btn-outline-success" id="parseExpressionBtn">
+                                        <i class="bi bi-calculator me-1"></i>表达式计算
+                                    </button>
+                                    <button class="btn btn-outline-secondary" id="togglePresetsBtn">
+                                        <i class="bi bi-gear me-1"></i>管理预设
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 文本编码 Tab -->
+                            <div class="tab-pane fade" id="text-content" role="tabpanel">
+                                <div class="mb-3">
+                                    <label for="textInput" class="form-label">输入文本</label>
+                                    <textarea class="form-control" id="textInput" rows="3" placeholder="输入要转换的文本..."></textarea>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-4">
+                                        <label for="encodingType" class="form-label">编码方式</label>
+                                        <select class="form-select" id="encodingType">
+                                            <option value="ascii">ASCII</option>
+                                            <option value="utf8" selected>UTF-8</option>
+                                            <option value="hex">十六进制</option>
+                                            <option value="base64">Base64</option>
+                                            <option value="binary">二进制</option>
+                                            <option value="url">URL编码</option>
+                                            <option value="unicode">Unicode转义</option>
+                                            <option value="html">HTML实体</option>
+                                            <option value="morse">摩尔斯电码</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label for="batchMode" class="form-label">处理模式</label>
+                                        <select class="form-select" id="batchMode">
+                                            <option value="single" selected>整体处理</option>
+                                            <option value="line">逐行处理</option>
+                                            <option value="char">逐字符处理</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mt-4">
+                                        <button class="btn btn-primary" id="encodeBtn">编码</button>
+                                        <button class="btn btn-secondary" id="decodeBtn">解码</button>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="encodedOutput" class="form-label">转换结果</label>
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="encodedOutput" rows="3" readonly></textarea>
+                                        <button class="btn btn-outline-primary" id="copyEncodedBtn" type="button">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="bi bi-info-circle"></i> 编码格式说明</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <ul class="list-unstyled">
+                                                    <li><strong>ASCII</strong>: 纯英文字符编码 (0-127)</li>
+                                                    <li><strong>UTF-8</strong>: 通用Unicode编码，支持多语言</li>
+                                                    <li><strong>十六进制</strong>: 字节的十六进制表示</li>
+                                                    <li><strong>Base64</strong>: 用于二进制数据传输</li>
+                                                    <li><strong>二进制</strong>: 字节的二进制表示</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <ul class="list-unstyled">
+                                                    <li><strong>URL编码</strong>: 网址安全字符编码</li>
+                                                    <li><strong>Unicode转义</strong>: \uXXXX 格式</li>
+                                                    <li><strong>HTML实体</strong>: HTML特殊字符编码</li>
+                                                    <li><strong>摩尔斯电码</strong>: 点划转换</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 位运算 Tab -->
+                            <div class="tab-pane fade" id="bit-content" role="tabpanel">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="operand1" class="form-label">操作数1</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="operand1" placeholder="输入十进制数字...">
+                                            <select class="form-select" id="operand1Base" style="max-width: 90px;">
+                                                <option value="10" selected>十进制</option>
+                                                <option value="16">十六进制</option>
+                                                <option value="2">二进制</option>
+                                                <option value="8">八进制</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="operand2" class="form-label">操作数2</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="operand2" placeholder="输入十进制数字...">
+                                            <select class="form-select" id="operand2Base" style="max-width: 90px;">
+                                                <option value="10" selected>十进制</option>
+                                                <option value="16">十六进制</option>
+                                                <option value="2">二进制</option>
+                                                <option value="8">八进制</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bitPresets" class="form-label">常用位掩码</label>
+                                    <div class="d-flex flex-wrap" id="bitPresets">
+                                        <button class="btn btn-sm btn-outline-secondary me-2 mb-2" onclick="usePresetBitmask('0xFF')">0xFF (低8位)</button>
+                                        <button class="btn btn-sm btn-outline-secondary me-2 mb-2" onclick="usePresetBitmask('0xFFFF')">0xFFFF (低16位)</button>
+                                        <button class="btn btn-sm btn-outline-secondary me-2 mb-2" onclick="usePresetBitmask('0x80')">0x80 (最高位)</button>
+                                        <button class="btn btn-sm btn-outline-secondary me-2 mb-2" onclick="usePresetBitmask('0x7F')">0x7F (除最高位)</button>
+                                        <button class="btn btn-sm btn-outline-secondary me-2 mb-2" onclick="usePresetBitmask('0xAAAAAAAA')">0xAAAAAAAA (交替1010)</button>
+                                        <button class="btn btn-sm btn-outline-secondary me-2 mb-2" onclick="usePresetBitmask('0x55555555')">0x55555555 (交替0101)</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-eye"></i> 操作数1可视化</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="bit-visualization interactive" id="operand1Bits">
+                                            <!-- 操作数1位可视化 -->
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">点击位可切换高低</small>
+                                            <span class="float-end">
+                                                <span class="me-2">十六进制: <span id="op1Hex">0x00000000</span></span>
+                                                <span>十进制: <span id="op1Dec">0</span></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-cpu"></i> 位运算</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="bitOpSelector" class="form-label">选择运算</label>
+                                                <select class="form-select" id="bitOpSelector">
+                                                    <option value="AND">AND (&) - 位与</option>
+                                                    <option value="OR">OR (|) - 位或</option>
+                                                    <option value="XOR">XOR (^) - 异或</option>
+                                                    <option value="NOT">NOT (~) - 取反</option>
+                                                    <option value="SHL">左移 (<<)</option>
+                                                    <option value="SHR">右移 (>>)</option>
+                                                    <option value="ZERO">CLEAR - 清零</option>
+                                                    <option value="USHR">无符号右移 (>>>)</option>
+                                                    <option value="ROTATE_LEFT">循环左移</option>
+                                                    <option value="ROTATE_RIGHT">循环右移</option>
+                                                    <option value="SET_BIT">设置单个位</option>
+                                                    <option value="CLEAR_BIT">清除单个位</option>
+                                                    <option value="TOGGLE_BIT">翻转单个位</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 mb-3" id="bitNumberField" style="display: none;">
+                                                <label for="bitNumber" class="form-label">位位置 (0-31)</label>
+                                                <input type="number" class="form-control" id="bitNumber" min="0" max="31" value="0">
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label class="d-block">&nbsp;</label>
+                                                <button class="btn btn-primary" onclick="performAdvancedBitOperation()">执行运算</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <h5 class="mb-0"><i class="bi bi-eye"></i> 操作数2可视化</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="bit-visualization interactive" id="operand2Bits">
+                                            <!-- 操作数2位可视化 -->
+                                        </div>
+                                        <div class="mt-2">
+                                            <small class="text-muted">点击位可切换高低</small>
+                                            <span class="float-end">
+                                                <span class="me-2">十六进制: <span id="op2Hex">0x00000000</span></span>
+                                                <span>十进制: <span id="op2Dec">0</span></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="card mb-3">
+                                    <div class="card-header bg-success text-white">
+                                        <h5 class="mb-0"><i class="bi bi-check-circle"></i> 计算结果</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label for="bitResult" class="form-label">十进制结果</label>
+                                                <input type="text" class="form-control" id="bitResult" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label for="bitResultHex" class="form-label">十六进制结果</label>
+                                                <input type="text" class="form-control" id="bitResultHex" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="bit-visualization" id="resultBits">
+                                            <!-- 结果位可视化 -->
+                                        </div>
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="useResultAsOperand1()">
+                                                结果用作操作数1
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="copyBitResult()">
+                                                <i class="bi bi-clipboard"></i> 复制结果
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="bi bi-info-circle"></i> 位运算说明</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <ul class="list-unstyled">
+                                                    <li><strong>AND (&)</strong>: 两个位都为1时结果为1</li>
+                                                    <li><strong>OR (|)</strong>: 至少一个位为1时结果为1</li>
+                                                    <li><strong>XOR (^)</strong>: 两个位不同时结果为1</li>
+                                                    <li><strong>NOT (~)</strong>: 位取反，0变1，1变0</li>
+                                                    <li><strong>左移 (<<)</strong>: 向左移动指定位数</li>
+                                                    <li><strong>右移 (>>)</strong>: 向右移动指定位数</li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <ul class="list-unstyled">
+                                                    <li><strong>无符号右移 (>>>)</strong>: 忽略符号位右移</li>
+                                                    <li><strong>循环左/右移</strong>: 移出的位循环到另一端</li>
+                                                    <li><strong>设置单个位</strong>: 将指定位置设为1</li>
+                                                    <li><strong>清除单个位</strong>: 将指定位置设为0</li>
+                                                    <li><strong>翻转单个位</strong>: 指定位置0变1，1变0</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 浮点数 Tab -->
+                            <div class="tab-pane fade" id="float-content" role="tabpanel">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="floatInput" class="form-label">十进制浮点数</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="floatInput" placeholder="输入浮点数...">
+                                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">特殊值</button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('NaN')">NaN (非数值)</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('Infinity')">Infinity (正无穷)</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('-Infinity')">-Infinity (负无穷)</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('0')">+0 (正零)</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('-0')">-0 (负零)</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('3.14159')">π (3.14159...)</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('2.71828')">e (2.71828...)</a></li>
+                                                <li><a class="dropdown-item" href="#" onclick="useSpecialFloat('1.41421')">√2 (1.41421...)</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="floatFormat" class="form-label">格式</label>
+                                        <select class="form-select" id="floatFormat">
+                                            <option value="binary32">IEEE 754单精度 (32位)</option>
+                                            <option value="binary64">IEEE 754双精度 (64位)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <div class="input-group">
+                                            <span class="input-group-text">十六进制输入</span>
+                                            <input type="text" class="form-control" id="hexFloat" placeholder="0x41200000">
+                                            <button class="btn btn-outline-secondary" onclick="convertHexToFloat()">
+                                                <i class="bi bi-arrow-left"></i> 解析
+                                            </button>
+                                        </div>
+                                        <small class="form-text text-muted">可直接输入IEEE 754格式的十六进制值</small>
+                                    </div>
+                                    <div class="col-md-6 d-flex align-items-end">
+                                        <button class="btn btn-primary w-100" id="convertFloatBtn">解析浮点数</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="card mb-3" id="floatResultCard" style="display: none;">
+                                    <div class="card-header bg-primary text-white">
+                                        <h5 class="mb-0"><i class="bi bi-layers"></i> IEEE 754 浮点数解析</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <h6>二进制表示</h6>
+                                            <div class="binary-visualization" id="floatBinary">
+                                                <!-- 浮点数二进制表示 -->
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3 text-center">
+                                            <div class="col-md-4">
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <h6 class="text-danger">符号位</h6>
+                                                        <div id="signBit" class="mb-2"></div>
+                                                        <div id="signValue"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <h6 class="text-primary">指数</h6>
+                                                        <div id="exponentBits" class="mb-2"></div>
+                                                        <div id="exponentValue"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="card bg-light">
+                                                    <div class="card-body">
+                                                        <h6 class="text-success">尾数</h6>
+                                                        <div id="mantissaBits" class="mb-2"></div>
+                                                        <div id="mantissaValue"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h6>十六进制表示</h6>
+                                                        <div id="floatHex" class="font-monospace"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card">
+                                                    <div class="card-body">
+                                                        <h6>计算公式</h6>
+                                                        <div id="floatFormula" class="font-monospace"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="alert alert-info">
+                                            <strong>计算结果:</strong> <span id="floatFinalValue"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><i class="bi bi-info-circle"></i> IEEE 754 浮点数格式</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>单精度 (32位)</h6>
+                                                <ul>
+                                                    <li>符号位: 1位</li>
+                                                    <li>指数: 8位 (偏置值: 127)</li>
+                                                    <li>尾数: 23位</li>
+                                                    <li>精度: ~7位十进制数字</li>
+                                                    <li>范围: ±1.18×10<sup>-38</sup> 到 ±3.4×10<sup>38</sup></li>
+                                                </ul>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>双精度 (64位)</h6>
+                                                <ul>
+                                                    <li>符号位: 1位</li>
+                                                    <li>指数: 11位 (偏置值: 1023)</li>
+                                                    <li>尾数: 52位</li>
+                                                    <li>精度: ~16位十进制数字</li>
+                                                    <li>范围: ±2.23×10<sup>-308</sup> 到 ±1.80×10<sup>308</sup></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 历史记录和可视化 -->
+        <div class="row">
+            <div class="col-md-6">
+                <!-- 历史记录区 -->
+                <div class="card converter-card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h4 class="mb-0"><i class="bi bi-clock-history me-2"></i>转换历史</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="historyList" style="max-height: 400px; overflow-y: auto;">
+                            <!-- 历史记录动态加载 -->
+                        </div>
+                        <button class="btn btn-outline-danger mt-3" id="clearHistoryBtn">
+                            <i class="bi bi-trash me-1"></i>清除历史
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <!-- 进制可视化区 -->
+                <div class="card converter-card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0"><i class="bi bi-eye me-2"></i>进制可视化</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="visualValue" class="form-label">十进制值</label>
+                                <input type="number" class="form-control" id="visualValue" value="42" min="0" max="255">
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" id="updateVisualBtn">更新可视化</button>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="mb-2"><strong>二进制:</strong> <span id="binaryVisual"></span></div>
+                                        <div class="mb-2"><strong>八进制:</strong> <span id="octalVisual"></span></div>
+                                        <div class="mb-2"><strong>十进制:</strong> <span id="decimalVisual"></span></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="mb-2"><strong>十六进制:</strong> <span id="hexVisual"></span></div>
+                                        <div class="mb-2"><strong>ASCII:</strong> <span id="asciiVisual"></span></div>
+                                        <div class="mb-2"><strong>颜色:</strong> <span id="colorVisual"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="bitVisualDisplay" class="bit-visualization">
+                            <!-- 位可视化 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 预设管理模态框 -->
+    <div class="modal fade" id="presetModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">管理进制预设</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">选择显示的进制</label>
+                        <div id="presetCheckboxes">
+                            <!-- 动态生成预设复选框 -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="savePresetsBtn">保存设置</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 表达式计算模态框 -->
+    <div class="modal fade" id="expressionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">表达式计算</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="expressionInput" class="form-label">输入数学表达式</label>
+                        <textarea class="form-control expression-input" id="expressionInput" placeholder="例如: 0xFF + 0b1010 * (37 >> 2)"></textarea>
+                        <div class="form-text">
+                            支持: 十进制(123)、二进制(0b1010)、八进制(0o755)、十六进制(0xFF)、位运算(&, |, ^, ~, <<, >>)、基本运算(+, -, *, /, %)
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="calculateExpressionBtn">计算</button>
+                    
+                    <div class="mt-3" id="expressionResult" style="display: none;">
+                        <h6>计算结果:</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <div id="expressionResultValue"></div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div><strong>二进制:</strong> <span id="exprBinary"></span></div>
+                                        <div><strong>八进制:</strong> <span id="exprOctal"></span></div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div><strong>十六进制:</strong> <span id="exprHex"></span></div>
+                                        <div><strong>三十二进制:</strong> <span id="exprBase32"></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">关闭</button>
+                    <button type="button" class="btn btn-success" id="useResultBtn">使用结果</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.0.0/lib/browser/math.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-base64@3.7.3/base64.min.js"></script>
+    <script id="conversionScript">
+        // 全局变量和初始化配置
+        let presets = JSON.parse(localStorage.getItem('baseConverterPresets')) || [2, 8, 10, 16];
+        let history = JSON.parse(localStorage.getItem('baseConverterHistory')) || [];
+        let customBases = [];
+        let currentNumberValue = 0;
+        
+        // 初始化 Bootstrap 标签页
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化应用
+            initializeApp();
+            
+            // 添加直接的tab点击事件监听
+            document.querySelectorAll('.nav-tabs button[data-bs-toggle="tab"]').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    
+                    // 移除所有标签页的active类
+                    document.querySelectorAll('.nav-tabs button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    
+                    // 移除所有内容区域的active和show类
+                    document.querySelectorAll('.tab-pane').forEach(pane => {
+                        pane.classList.remove('active');
+                        pane.classList.remove('show');
+                    });
+                    
+                    // 添加当前标签页的active类
+                    this.classList.add('active');
+                    
+                    // 获取目标内容区域id
+                    const targetId = this.getAttribute('data-bs-target');
+                    
+                    // 添加目标内容区域的active和show类
+                    const targetPane = document.querySelector(targetId);
+                    if (targetPane) {
+                        targetPane.classList.add('active');
+                        targetPane.classList.add('show');
+                    }
+                });
+            });
+            
+            // 确保下拉菜单功能正常
+            document.querySelectorAll('[data-bs-toggle="dropdown"]').forEach(dropdown => {
+                dropdown.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const dropdownMenu = this.nextElementSibling;
+                    if (dropdownMenu && dropdownMenu.classList.contains('dropdown-menu')) {
+                        dropdownMenu.classList.toggle('show');
+                    }
+                });
+            });
+            
+            // 点击外部区域关闭下拉菜单
+            document.addEventListener('click', function(event) {
+                if (!event.target.matches('[data-bs-toggle="dropdown"]')) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
+            
+            // 添加模态框功能
+            document.querySelectorAll('[data-bs-toggle="modal"]').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const targetId = this.getAttribute('data-bs-target');
+                    const modal = document.querySelector(targetId);
+                    if (modal) {
+                        modal.style.display = 'block';
+                        modal.classList.add('show');
+                        document.body.classList.add('modal-open');
+                        
+                        // 创建背景遮罩
+                        const backdrop = document.createElement('div');
+                        backdrop.className = 'modal-backdrop fade show';
+                        document.body.appendChild(backdrop);
+                    }
+                });
+            });
+            
+            // 关闭模态框
+            document.querySelectorAll('[data-bs-dismiss="modal"]').forEach(button => {
+                button.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const modal = this.closest('.modal');
+                    if (modal) {
+                        modal.style.display = 'none';
+                        modal.classList.remove('show');
+                        document.body.classList.remove('modal-open');
+                        
+                        // 移除背景遮罩
+                        const backdrop = document.querySelector('.modal-backdrop');
+                        if (backdrop) {
+                            backdrop.remove();
+                        }
+                    }
+                });
+            });
+            
+            // 处理已有的模态框方法
+            window.bootstrap = window.bootstrap || {};
+            window.bootstrap.Modal = {
+                getInstance: function(element) {
+                    return {
+                        hide: function() {
+                            element.style.display = 'none';
+                            element.classList.remove('show');
+                            document.body.classList.remove('modal-open');
+                            
+                            // 移除背景遮罩
+                            const backdrop = document.querySelector('.modal-backdrop');
+                            if (backdrop) {
+                                backdrop.remove();
+                            }
+                        }
+                    };
+                }
+            };
+        });
+        
+        // 摩尔斯电码映射表
+        const morseCode = {
+            'a': '.-', 'b': '-...', 'c': '-.-.', 'd': '-..', 'e': '.', 'f': '..-.', 
+            'g': '--.', 'h': '....', 'i': '..', 'j': '.---', 'k': '-.-', 'l': '.-..', 
+            'm': '--', 'n': '-.', 'o': '---', 'p': '.--.', 'q': '--.-', 'r': '.-.', 
+            's': '...', 't': '-', 'u': '..-', 'v': '...-', 'w': '.--', 'x': '-..-', 
+            'y': '-.--', 'z': '--..', 
+            '0': '-----', '1': '.----', '2': '..---', '3': '...--', '4': '....-', 
+            '5': '.....', '6': '-....', '7': '--...', '8': '---..', '9': '----.', 
+            '.': '.-.-.-', ',': '--..--', '?': '..--..', "'": '.----.', '!': '-.-.--', 
+            '/': '-..-.', '(': '-.--.', ')': '-.--.-', '&': '.-...', ':': '---...', 
+            ';': '-.-.-.', '=': '-...-', '+': '.-.-.', '-': '-....-', '_': '..--.-', 
+            '"': '.-..-.', '$': '...-..-', '@': '.--.-.',
+            ' ': '/'
+        };
+        
+        // 反向摩尔斯电码映射表
+        const morseToChar = {};
+        for (const [char, code] of Object.entries(morseCode)) {
+            morseToChar[code] = char;
+        }
+        
+        // DOM元素
+        const converterInputs = document.getElementById('converterInputs');
+        const historyList = document.getElementById('historyList');
+        const addBaseBtn = document.getElementById('addBaseBtn');
+        const togglePresetsBtn = document.getElementById('togglePresetsBtn');
+        const parseExpressionBtn = document.getElementById('parseExpressionBtn');
+        const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+        const bitVisualDisplay = document.getElementById('bitVisualDisplay');
+        const visualValue = document.getElementById('visualValue');
+        const updateVisualBtn = document.getElementById('updateVisualBtn');
+        
+        // 初始化函数
+        function initializeApp() {
+            initConverterInputs();
+            updateHistoryDisplay();
+            setupEventListeners();
+            updateVisualization(42); // 默认可视化值
+            
+            // 不需要手动初始化默认标签页，Bootstrap会自动处理
+            // document.getElementById('number-tab').classList.add('active');
+            // document.getElementById('number-content').classList.add('show');
+            // document.getElementById('number-content').classList.add('active');
+        }
+        
+        // 初始化进制输入区域
+        function initConverterInputs() {
+            converterInputs.innerHTML = ''; // 清空现有内容
+            
+            // 添加预设进制
+            presets.forEach(base => {
+                addBaseInput(base);
+            });
+            
+            // 添加自定义进制
+            customBases.forEach(base => {
+                addBaseInput(base);
+            });
+        }
+        
+        // 添加单个进制输入框
+        function addBaseInput(base) {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'col-md-6 mb-3';
+            colDiv.dataset.base = base;
+            
+            const label = base + '进制';
+            const placeholder = `输入${base}进制数...`;
+            
+            colDiv.innerHTML = `
+                <div class="input-group">
+                    <span class="input-group-text">${label}</span>
+                    <input type="text" class="form-control base-input" data-base="${base}" placeholder="${placeholder}">
+                    ${base !== 10 ? `<button class="btn btn-outline-secondary copy-btn" title="复制" data-base="${base}">
+                        <i class="bi bi-clipboard"></i>
+                    </button>` : ''}
+                    ${!presets.includes(base) ? `<button class="btn btn-outline-danger remove-base-btn" data-base="${base}">
+                        <i class="bi bi-x"></i>
+                    </button>` : ''}
+                </div>
+            `;
+            
+            converterInputs.appendChild(colDiv);
+            
+            // 添加输入事件
+            const input = colDiv.querySelector('.base-input');
+            input.addEventListener('input', () => convertBase(input));
+            
+            // 添加复制按钮事件
+            const copyBtn = colDiv.querySelector('.copy-btn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', () => {
+                    copyToClipboard(input.value);
+                });
+            }
+            
+            // 添加移除按钮事件
+            const removeBtn = colDiv.querySelector('.remove-base-btn');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    customBases = customBases.filter(b => b !== base);
+                    colDiv.remove();
+                });
+            }
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 添加自定义进制按钮
+            addBaseBtn.addEventListener('click', () => {
+                const base = prompt('请输入进制数 (2-36):', '32');
+                if (base) {
+                    const baseNum = parseInt(base);
+                    if (baseNum >= 2 && baseNum <= 36 && !isNaN(baseNum)) {
+                        if (presets.includes(baseNum) || customBases.includes(baseNum)) {
+                            alert('该进制已存在！');
+                            return;
+                        }
+                        customBases.push(baseNum);
+                        addBaseInput(baseNum);
+                        
+                        // 更新新添加的输入框值
+                        const input = document.querySelector(`.base-input[data-base="${baseNum}"]`);
+                        if (input && currentNumberValue) {
+                            input.value = currentNumberValue.toString(baseNum).toUpperCase();
+                        }
+                    } else {
+                        alert('请输入2-36之间的有效进制数！');
+                    }
+                }
+            });
+            
+            // 表达式计算按钮
+            parseExpressionBtn.addEventListener('click', () => {
+                // 使用我们自己实现的模态框显示方法
+                const modal = document.getElementById('expressionModal');
+                if (modal) {
+                    modal.style.display = 'block';
+                    modal.classList.add('show');
+                    document.body.classList.add('modal-open');
+                    
+                    // 创建背景遮罩
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'modal-backdrop fade show';
+                    document.body.appendChild(backdrop);
+                }
+            });
+            
+            // 计算表达式按钮
+            document.getElementById('calculateExpressionBtn').addEventListener('click', calculateExpression);
+            
+            // 使用结果按钮
+            document.getElementById('useResultBtn').addEventListener('click', () => {
+                const resultValue = document.getElementById('expressionResultValue').textContent;
+                const decimalValue = parseInt(resultValue);
+                
+                if (!isNaN(decimalValue)) {
+                    // 更新10进制输入框
+                    const decInput = document.querySelector('.base-input[data-base="10"]');
+                    if (decInput) {
+                        decInput.value = decimalValue;
+                        convertBase(decInput);
+                    }
+                }
+                
+                // 关闭表达式计算模态框
+                const expressionModal = document.getElementById('expressionModal');
+                if (expressionModal) {
+                    expressionModal.style.display = 'none';
+                    expressionModal.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                    
+                    // 移除背景遮罩
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                }
+            });
+            
+            // 预设管理按钮
+            togglePresetsBtn.addEventListener('click', () => {
+                // 生成预设复选框
+                const container = document.getElementById('presetCheckboxes');
+                container.innerHTML = '';
+                
+                for (let i = 2; i <= 36; i++) {
+                    const isChecked = presets.includes(i);
+                    container.innerHTML += `
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input preset-checkbox" type="checkbox" id="preset${i}" value="${i}" ${isChecked ? 'checked' : ''}>
+                            <label class="form-check-label" for="preset${i}">${i}进制</label>
+                        </div>
+                    `;
+                }
+                
+                // 显示预设模态框
+                const presetModal = document.getElementById('presetModal');
+                if (presetModal) {
+                    presetModal.style.display = 'block';
+                    presetModal.classList.add('show');
+                    document.body.classList.add('modal-open');
+                    
+                    // 创建背景遮罩
+                    const backdrop = document.createElement('div');
+                    backdrop.className = 'modal-backdrop fade show';
+                    document.body.appendChild(backdrop);
+                }
+            });
+            
+            // 保存预设按钮
+            document.getElementById('savePresetsBtn').addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('.preset-checkbox:checked');
+                const newPresets = Array.from(checkboxes).map(cb => parseInt(cb.value)).sort((a, b) => a - b);
+                
+                if (newPresets.length === 0) {
+                    alert('请至少选择一个进制！');
+                    return;
+                }
+                
+                presets = newPresets;
+                localStorage.setItem('baseConverterPresets', JSON.stringify(presets));
+                
+                // 重新初始化输入区域
+                initConverterInputs();
+                
+                // 关闭预设模态框
+                const presetModal = document.getElementById('presetModal');
+                if (presetModal) {
+                    presetModal.style.display = 'none';
+                    presetModal.classList.remove('show');
+                    document.body.classList.remove('modal-open');
+                    
+                    // 移除背景遮罩
+                    const backdrop = document.querySelector('.modal-backdrop');
+                    if (backdrop) {
+                        backdrop.remove();
+                    }
+                }
+            });
+            
+            // 清除历史按钮
+            clearHistoryBtn.addEventListener('click', () => {
+                if (confirm('确定要清除所有转换历史记录吗？')) {
+                    history = [];
+                    localStorage.removeItem('baseConverterHistory');
+                    updateHistoryDisplay();
+                }
+            });
+            
+            // 更新可视化按钮
+            updateVisualBtn.addEventListener('click', () => {
+                const value = parseInt(visualValue.value);
+                if (!isNaN(value)) {
+                    updateVisualization(value);
+                }
+            });
+            
+            // 文本编码相关
+            document.getElementById('encodeBtn').addEventListener('click', encodeText);
+            document.getElementById('decodeBtn').addEventListener('click', decodeText);
+            document.getElementById('copyEncodedBtn').addEventListener('click', () => {
+                copyToClipboard(document.getElementById('encodedOutput').value);
+            });
+            
+            // 浮点数转换按钮
+            document.getElementById('convertFloatBtn').addEventListener('click', convertFloat);
+            
+            // 操作数1和操作数2输入框
+            document.getElementById('operand1').addEventListener('input', updateBitOperands);
+            document.getElementById('operand2').addEventListener('input', updateBitOperands);
+        }
+        
+        // 进制转换核心函数
+        function convertBase(inputElement) {
+            const value = inputElement.value.trim();
+            const fromBase = parseInt(inputElement.dataset.base);
+            
+            if (!value) {
+                // 清空所有其他输入框
+                document.querySelectorAll('.base-input').forEach(input => {
+                    if (input !== inputElement) {
+                        input.value = '';
+                    }
+                });
+                currentNumberValue = 0;
+                return;
+            }
+            
+            try {
+                // 验证输入字符是否合法
+                const validChars = getValidChars(fromBase);
+                const valueUpper = value.toUpperCase();
+                
+                if (!isValidForBase(valueUpper, fromBase)) {
+                    throw new Error(`无效的${fromBase}进制数`);
+                }
+                
+                // 解析为十进制
+                const decimalValue = parseInt(value, fromBase);
+                
+                if (isNaN(decimalValue)) {
+                    throw new Error('无法解析为有效数值');
+                }
+                
+                // 更新全局当前值
+                currentNumberValue = decimalValue;
+                
+                // 更新所有输入框
+                document.querySelectorAll('.base-input').forEach(input => {
+                    const base = parseInt(input.dataset.base);
+                    if (input !== inputElement) {
+                        input.value = decimalValue.toString(base).toUpperCase();
+                    }
+                });
+                
+                // 更新可视化
+                updateVisualization(decimalValue);
+                
+                // 添加到历史记录
+                addToHistory({
+                    input: value,
+                    fromBase: fromBase,
+                    result: decimalValue.toString(10),
+                    timestamp: new Date().toLocaleString()
+                });
+            } catch (error) {
+                console.error('转换错误:', error);
+                alert(`转换错误: ${error.message}`);
+                // 保留当前输入框的值，清空其他输入框
+                document.querySelectorAll('.base-input').forEach(input => {
+                    if (input !== inputElement) {
+                        input.value = '';
+                    }
+                });
+            }
+        }
+        
+        // 更新进制可视化
+        function updateVisualization(value) {
+            // 限制值范围，避免过大的数
+            value = Math.max(0, Math.min(value, Number.MAX_SAFE_INTEGER));
+            
+            // 更新各种进制显示
+            document.getElementById('binaryVisual').textContent = value.toString(2);
+            document.getElementById('octalVisual').textContent = value.toString(8);
+            document.getElementById('decimalVisual').textContent = value.toString(10);
+            document.getElementById('hexVisual').textContent = '0x' + value.toString(16).toUpperCase();
+            
+            // ASCII值（如果在可打印范围内）
+            const asciiVisual = document.getElementById('asciiVisual');
+            if (value >= 32 && value <= 126) {
+                asciiVisual.textContent = `'${String.fromCharCode(value)}'`;
+            } else {
+                asciiVisual.textContent = '不可打印';
+            }
+            
+            // 颜色值（如果在RGB范围内）
+            const colorVisual = document.getElementById('colorVisual');
+            if (value >= 0 && value <= 0xFFFFFF) {
+                const hexColor = '#' + value.toString(16).padStart(6, '0');
+                colorVisual.innerHTML = `<span class="color-block" style="background-color: ${hexColor}"></span>${hexColor}`;
+            } else {
+                colorVisual.textContent = '超出RGB范围';
+            }
+            
+            // 更新位可视化
+            updateBitVisualization(value);
+        }
+        
+        // 更新位可视化显示
+        function updateBitVisualization(value) {
+            // 转换为32位二进制，并按每4位分组
+            const binaryString = value.toString(2).padStart(32, '0');
+            let html = '';
+            
+            // 每8位一组，每4位一个空格
+            for (let i = 0; i < 32; i += 8) {
+                html += '<div class="bit-group">';
+                for (let j = i; j < i + 8; j++) {
+                    if (j % 4 === 0 && j > i) html += ' ';
+                    const bitValue = binaryString.charAt(j);
+                    html += `<span class="bit-box ${bitValue === '1' ? 'active' : ''}" 
+                              data-position="${31-j}" onclick="toggleBit(this)">
+                              ${bitValue}
+                            </span>`;
+                }
+                html += '</div>';
+            }
+            
+            bitVisualDisplay.innerHTML = html;
+        }
+        
+        // 切换位值（可视化交互）
+        window.toggleBit = function(element) {
+            const position = parseInt(element.dataset.position);
+            const isActive = element.classList.toggle('active');
+            
+            // 更新可视化值
+            const newValue = isActive 
+                ? currentNumberValue | (1 << position) 
+                : currentNumberValue & ~(1 << position);
+            
+            currentNumberValue = newValue;
+            visualValue.value = newValue;
+            updateVisualization(newValue);
+            
+            // 更新转换输入框
+            const decInput = document.querySelector('.base-input[data-base="10"]');
+            if (decInput) {
+                decInput.value = newValue;
+                document.querySelectorAll('.base-input').forEach(input => {
+                    if (input !== decInput) {
+                        const base = parseInt(input.dataset.base);
+                        input.value = newValue.toString(base).toUpperCase();
+                    }
+                });
+            }
+        };
+        
+        // 位运算相关函数
+        window.usePresetBitmask = function(hexValue) {
+            document.getElementById('operand2').value = hexValue;
+            document.getElementById('operand2Base').value = '16';
+            updateBitOperands();
+        };
+        
+        // 位运算操作选择变化
+        document.getElementById('bitOpSelector').addEventListener('change', function() {
+            const opType = this.value;
+            const bitNumberField = document.getElementById('bitNumberField');
+            
+            // 显示或隐藏位置输入框
+            if (opType === 'SET_BIT' || opType === 'CLEAR_BIT' || opType === 'TOGGLE_BIT') {
+                bitNumberField.style.display = 'block';
+            } else {
+                bitNumberField.style.display = 'none';
+            }
+        });
+        
+        // 点击操作数1的位可视化
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('bit-box') && e.target.closest('#operand1Bits')) {
+                const position = parseInt(e.target.dataset.position);
+                const isActive = e.target.classList.toggle('active');
+                
+                // 更新操作数1
+                let op1Value = parseInt(document.getElementById('operand1').value) || 0;
+                op1Value = isActive 
+                    ? op1Value | (1 << position) 
+                    : op1Value & ~(1 << position);
+                
+                document.getElementById('operand1').value = op1Value;
+                updateBitOperands();
+            }
+            
+            // 点击操作数2的位可视化
+            if (e.target.classList.contains('bit-box') && e.target.closest('#operand2Bits')) {
+                const position = parseInt(e.target.dataset.position);
+                const isActive = e.target.classList.toggle('active');
+                
+                // 更新操作数2
+                let op2Value = parseInt(document.getElementById('operand2').value) || 0;
+                op2Value = isActive 
+                    ? op2Value | (1 << position) 
+                    : op2Value & ~(1 << position);
+                
+                document.getElementById('operand2').value = op2Value;
+                updateBitOperands();
+            }
+        });
+        
+        // 使用结果作为操作数1
+        window.useResultAsOperand1 = function() {
+            const result = document.getElementById('bitResult').value;
+            document.getElementById('operand1').value = result;
+            document.getElementById('operand1Base').value = '10';
+            updateBitOperands();
+        };
+        
+        // 复制位运算结果
+        window.copyBitResult = function() {
+            const result = document.getElementById('bitResult').value;
+            copyToClipboard(result);
+        };
+        
+        // 执行高级位运算
+        window.performAdvancedBitOperation = function() {
+            // 获取操作数值
+            const op1Base = parseInt(document.getElementById('operand1Base').value);
+            const op2Base = parseInt(document.getElementById('operand2Base').value);
+            
+            let op1Input = document.getElementById('operand1').value.trim();
+            let op2Input = document.getElementById('operand2').value.trim();
+            
+            // 处理十六进制输入
+            if (op1Base === 16 && !op1Input.startsWith('0x')) {
+                op1Input = '0x' + op1Input;
+            }
+            if (op2Base === 16 && !op2Input.startsWith('0x')) {
+                op2Input = '0x' + op2Input;
+            }
+            
+            const operand1Value = parseInt(op1Input, op1Base) || 0;
+            const operand2Value = parseInt(op2Input, op2Base) || 0;
+            const operation = document.getElementById('bitOpSelector').value;
+            const bitNumber = parseInt(document.getElementById('bitNumber').value) || 0;
+            
+            let result = 0;
+            let operationDescription = '';
+            
+            switch(operation) {
+                case 'AND':
+                    result = operand1Value & operand2Value;
+                    operationDescription = `${operand1Value} & ${operand2Value}`;
+                    break;
+                case 'OR':
+                    result = operand1Value | operand2Value;
+                    operationDescription = `${operand1Value} | ${operand2Value}`;
+                    break;
+                case 'XOR':
+                    result = operand1Value ^ operand2Value;
+                    operationDescription = `${operand1Value} ^ ${operand2Value}`;
+                    break;
+                case 'NOT':
+                    result = ~operand1Value;
+                    operationDescription = `~${operand1Value}`;
+                    break;
+                case 'SHL':
+                    result = operand1Value << operand2Value;
+                    operationDescription = `${operand1Value} << ${operand2Value}`;
+                    break;
+                case 'SHR':
+                    result = operand1Value >> operand2Value;
+                    operationDescription = `${operand1Value} >> ${operand2Value}`;
+                    break;
+                case 'ZERO':
+                    result = 0;
+                    operationDescription = `${operand1Value} → 0`;
+                    break;
+                case 'USHR':
+                    result = operand1Value >>> operand2Value;
+                    operationDescription = `${operand1Value} >>> ${operand2Value}`;
+                    break;
+                case 'ROTATE_LEFT':
+                    // 32位循环左移
+                    result = (operand1Value << operand2Value) | (operand1Value >>> (32 - operand2Value));
+                    operationDescription = `${operand1Value} 循环左移 ${operand2Value} 位`;
+                    break;
+                case 'ROTATE_RIGHT':
+                    // 32位循环右移
+                    result = (operand1Value >>> operand2Value) | (operand1Value << (32 - operand2Value));
+                    operationDescription = `${operand1Value} 循环右移 ${operand2Value} 位`;
+                    break;
+                case 'SET_BIT':
+                    result = operand1Value | (1 << bitNumber);
+                    operationDescription = `设置 ${operand1Value} 的第 ${bitNumber} 位`;
+                    break;
+                case 'CLEAR_BIT':
+                    result = operand1Value & ~(1 << bitNumber);
+                    operationDescription = `清除 ${operand1Value} 的第 ${bitNumber} 位`;
+                    break;
+                case 'TOGGLE_BIT':
+                    result = operand1Value ^ (1 << bitNumber);
+                    operationDescription = `翻转 ${operand1Value} 的第 ${bitNumber} 位`;
+                    break;
+            }
+            
+            // 处理溢出
+            result = result >>> 0; // 将结果转换为无符号32位整数
+            
+            // 更新结果
+            document.getElementById('bitResult').value = result;
+            document.getElementById('bitResultHex').value = '0x' + result.toString(16).toUpperCase().padStart(8, '0');
+            
+            // 更新结果可视化
+            document.getElementById('resultBits').innerHTML = getInteractiveBitVisualizationHTML(result);
+            
+            // 添加到历史记录
+            addToHistory({
+                input: operationDescription,
+                fromBase: '位运算',
+                result: result.toString(),
+                timestamp: new Date().toLocaleString()
+            });
+        };
+        
+        // 更新位运算操作数的可视化
+        function updateBitOperands() {
+            // 获取操作数基数
+            const op1Base = parseInt(document.getElementById('operand1Base').value);
+            const op2Base = parseInt(document.getElementById('operand2Base').value);
+            
+            // 获取输入值
+            let op1Input = document.getElementById('operand1').value.trim();
+            let op2Input = document.getElementById('operand2').value.trim();
+            
+            // 处理十六进制输入
+            if (op1Base === 16 && !op1Input.startsWith('0x')) {
+                op1Input = '0x' + op1Input;
+            }
+            if (op2Base === 16 && !op2Input.startsWith('0x')) {
+                op2Input = '0x' + op2Input;
+            }
+            
+            // 解析值
+            const operand1Value = parseInt(op1Input, op1Base) || 0;
+            const operand2Value = parseInt(op2Input, op2Base) || 0;
+            
+            // 更新可视化
+            document.getElementById('operand1Bits').innerHTML = getInteractiveBitVisualizationHTML(operand1Value);
+            document.getElementById('operand2Bits').innerHTML = getInteractiveBitVisualizationHTML(operand2Value);
+            
+            // 更新十六进制和十进制显示
+            document.getElementById('op1Hex').textContent = '0x' + operand1Value.toString(16).toUpperCase().padStart(8, '0');
+            document.getElementById('op1Dec').textContent = operand1Value;
+            document.getElementById('op2Hex').textContent = '0x' + operand2Value.toString(16).toUpperCase().padStart(8, '0');
+            document.getElementById('op2Dec').textContent = operand2Value;
+        }
+        
+        // 获取交互式位可视化HTML
+        function getInteractiveBitVisualizationHTML(value) {
+            // 确保值在32位范围内
+            value = value >>> 0;
+            
+            const binaryString = value.toString(2).padStart(32, '0');
+            let html = '';
+            
+            for (let i = 0; i < 32; i += 8) {
+                html += '<div class="bit-group">';
+                for (let j = i; j < i + 8; j++) {
+                    if (j % 4 === 0 && j > i) html += ' ';
+                    const bitValue = binaryString.charAt(j);
+                    const position = 31 - j;
+                    html += `<span class="bit-box ${bitValue === '1' ? 'active' : ''}" 
+                              data-position="${position}">
+                              ${bitValue}
+                            </span>`;
+                }
+                html += '</div>';
+            }
+            
+            return html;
+        }
+        
+        // 辅助函数
+        
+        // 获取指定进制的有效字符
+        function getValidChars(base) {
+            if (base > 36 || base < 2) {
+                throw new Error('进制必须在2到36之间');
+            }
+            
+            let chars = '';
+            
+            // 添加数字0-9
+            const numDigits = Math.min(base, 10);
+            for (let i = 0; i < numDigits; i++) {
+                chars += i;
+            }
+            
+            // 如果进制>10，添加字母
+            if (base > 10) {
+                for (let i = 0; i < base - 10; i++) {
+                    chars += String.fromCharCode(65 + i); // 'A'的ASCII码是65
+                }
+            }
+            
+            return chars;
+        }
+        
+        // 验证字符串是否为有效的指定进制数
+        function isValidForBase(str, base) {
+            const validChars = getValidChars(base).toUpperCase();
+            for (let i = 0; i < str.length; i++) {
+                if (!validChars.includes(str[i])) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        
+        // 添加到历史记录
+        function addToHistory(entry) {
+            // 防止重复添加相同的转换
+            if (history.length > 0 && 
+                history[0].input === entry.input && 
+                history[0].fromBase === entry.fromBase) {
+                return;
+            }
+            
+            history.unshift(entry);
+            
+            // 限制历史记录长度
+            if (history.length > 20) {
+                history.pop();
+            }
+            
+            // 保存到本地存储
+            localStorage.setItem('baseConverterHistory', JSON.stringify(history));
+            
+            // 更新显示
+            updateHistoryDisplay();
+        }
+        
+        // 更新历史记录显示
+        function updateHistoryDisplay() {
+            historyList.innerHTML = '';
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="text-muted text-center p-3">暂无转换历史记录</div>';
+                return;
+            }
+            
+            history.forEach((item, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                let historyText = '';
+                
+                if (item.fromBase === '文本' || item.fromBase === '浮点数') {
+                    historyText = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">${item.input}</span>
+                                <span class="text-muted"> → ${item.result}</span>
+                            </div>
+                            <small class="text-muted">${item.timestamp}</small>
+                        </div>
+                    `;
+                } else {
+                    historyText = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-bold">${item.input}</span>
+                                <small class="text-muted">(${item.fromBase}进制)</small>
+                                <span class="text-muted"> → </span>
+                                <span>${item.result}</span>
+                                <small class="text-muted">(10进制)</small>
+                            </div>
+                            <small class="text-muted">${item.timestamp}</small>
+                        </div>
+                    `;
+                }
+                
+                historyItem.innerHTML = historyText;
+                
+                // 点击历史记录项使用该值
+                historyItem.addEventListener('click', () => {
+                    if (item.fromBase !== '文本' && item.fromBase !== '浮点数') {
+                        const decInput = document.querySelector('.base-input[data-base="10"]');
+                        if (decInput) {
+                            decInput.value = item.result;
+                            convertBase(decInput);
+                        }
+                    }
+                });
+                
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => {
+                    showToast('已复制到剪贴板');
+                })
+                .catch(err => {
+                    console.error('复制失败:', err);
+                    alert('复制失败，请手动复制');
+                });
+        }
+        
+        // 显示提示消息
+        function showToast(message) {
+            // 创建Toast元素
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '5';
+            
+            toastContainer.innerHTML = `
+                <div class="toast show" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="toast-header">
+                        <strong class="me-auto">提示</strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toastContainer);
+            
+            // 2秒后自动移除
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 2000);
+        }
+        
+        // 计算表达式
+        function calculateExpression() {
+            const expressionInput = document.getElementById('expressionInput').value;
+            const resultDiv = document.getElementById('expressionResult');
+            const resultValueDiv = document.getElementById('expressionResultValue');
+            
+            if (!expressionInput.trim()) {
+                resultDiv.style.display = 'none';
+                return;
+            }
+            
+            try {
+                // 预处理表达式，将二进制、八进制和十六进制转换为十进制
+                const processedExpr = expressionInput
+                    .replace(/0b([01]+)/gi, (match, p1) => parseInt(p1, 2))
+                    .replace(/0o([0-7]+)/gi, (match, p1) => parseInt(p1, 8))
+                    .replace(/0x([0-9a-f]+)/gi, (match, p1) => parseInt(p1, 16));
+                
+                // 计算表达式
+                const result = math.evaluate(processedExpr);
+                
+                if (typeof result !== 'number' || isNaN(result)) {
+                    throw new Error('表达式计算结果不是有效数值');
+                }
+                
+                // 显示结果
+                resultDiv.style.display = 'block';
+                resultValueDiv.textContent = result;
+                
+                // 更新不同进制表示
+                document.getElementById('exprBinary').textContent = result.toString(2);
+                document.getElementById('exprOctal').textContent = result.toString(8);
+                document.getElementById('exprHex').textContent = result.toString(16).toUpperCase();
+                document.getElementById('exprBase32').textContent = result.toString(32).toUpperCase();
+                
+                // 添加到历史记录
+                addToHistory({
+                    input: expressionInput,
+                    fromBase: '表达式',
+                    result: result.toString(),
+                    timestamp: new Date().toLocaleString()
+                });
+            } catch (error) {
+                console.error('表达式计算错误:', error);
+                alert(`表达式计算错误: ${error.message}`);
+                resultDiv.style.display = 'none';
+            }
+        }
+        
+        // 文本编码操作
+        function encodeText() {
+            const text = document.getElementById('textInput').value;
+            const encodingType = document.getElementById('encodingType').value;
+            const batchMode = document.getElementById('batchMode').value;
+            const output = document.getElementById('encodedOutput');
+            
+            if (!text) {
+                output.value = '';
+                return;
+            }
+            
+            try {
+                let result = '';
+                
+                // 根据批处理模式拆分文本
+                let items = [];
+                switch(batchMode) {
+                    case 'single':
+                        items = [text];
+                        break;
+                    case 'line':
+                        items = text.split('\n');
+                        break;
+                    case 'char':
+                        items = Array.from(text);
+                        break;
+                }
+                
+                // 对每个项目进行编码
+                result = items.map(item => {
+                    switch(encodingType) {
+                        case 'ascii':
+                            return Array.from(item).map(char => {
+                                const code = char.charCodeAt(0);
+                                if (code > 127) return `[非ASCII:${code}]`;
+                                return code;
+                            }).join(' ');
+                        case 'utf8':
+                            return Array.from(item)
+                                .map(char => char.charCodeAt(0).toString(16).padStart(4, '0'))
+                                .join(' ');
+                        case 'hex':
+                            return Array.from(item)
+                                .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+                                .join('');
+                        case 'base64':
+                            return Base64.encode(item);
+                        case 'binary':
+                            return Array.from(item)
+                                .map(char => char.charCodeAt(0).toString(2).padStart(8, '0'))
+                                .join(' ');
+                        case 'url':
+                            return encodeURIComponent(item);
+                        case 'unicode':
+                            return Array.from(item).map(char => 
+                                `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`
+                            ).join('');
+                        case 'html':
+                            return Array.from(item).map(char => {
+                                const code = char.charCodeAt(0);
+                                return `&#${code};`;
+                            }).join('');
+                        case 'morse':
+                            return Array.from(item).map(char => {
+                                const morse = morseCode[char.toLowerCase()];
+                                return morse !== undefined ? morse : char;
+                            }).join(' ');
+                        default:
+                            return item;
+                    }
+                }).join(batchMode === 'line' ? '\n' : batchMode === 'char' ? ' ' : '');
+                
+                output.value = result;
+                
+                // 添加到历史记录
+                addToHistory({
+                    input: text.substr(0, 20) + (text.length > 20 ? '...' : ''),
+                    fromBase: `文本→${encodingType}`,
+                    result: `已编码 (${batchMode}模式)`,
+                    timestamp: new Date().toLocaleString()
+                });
+            } catch (error) {
+                console.error('编码错误:', error);
+                alert(`编码错误: ${error.message}`);
+            }
+        }
+        
+        // 文本解码操作
+        function decodeText() {
+            const text = document.getElementById('textInput').value;
+            const encodingType = document.getElementById('encodingType').value;
+            const batchMode = document.getElementById('batchMode').value;
+            const output = document.getElementById('encodedOutput');
+            
+            if (!text) {
+                output.value = '';
+                return;
+            }
+            
+            try {
+                let result = '';
+                
+                // 根据批处理模式拆分文本
+                let items = [];
+                switch(batchMode) {
+                    case 'single':
+                        items = [text];
+                        break;
+                    case 'line':
+                        items = text.split('\n');
+                        break;
+                    case 'char':
+                        // 对于解码，字符模式没有意义，回退到整体模式
+                        items = [text];
+                        break;
+                }
+                
+                // 对每个项目进行解码
+                result = items.map(item => {
+                    try {
+                        switch(encodingType) {
+                            case 'ascii':
+                                return item.trim().split(/\s+/)
+                                    .map(code => {
+                                        const num = parseInt(code);
+                                        if (isNaN(num)) return code;
+                                        return String.fromCharCode(num);
+                                    })
+                                    .join('');
+                            case 'utf8':
+                                return item.trim().split(/\s+/)
+                                    .map(hex => {
+                                        try {
+                                            return String.fromCharCode(parseInt(hex, 16));
+                                        } catch (e) {
+                                            return hex;
+                                        }
+                                    })
+                                    .join('');
+                            case 'hex':
+                                let result = '';
+                                const cleanHex = item.replace(/\s+/g, '');
+                                if (cleanHex.length % 2 !== 0) {
+                                    throw new Error('十六进制字符串长度必须是偶数');
+                                }
+                                for (let i = 0; i < cleanHex.length; i += 2) {
+                                    result += String.fromCharCode(parseInt(cleanHex.substr(i, 2), 16));
+                                }
+                                return result;
+                            case 'base64':
+                                return Base64.decode(item);
+                            case 'binary':
+                                return item.trim().split(/\s+/)
+                                    .map(binary => {
+                                        try {
+                                            return String.fromCharCode(parseInt(binary, 2));
+                                        } catch (e) {
+                                            return binary;
+                                        }
+                                    })
+                                    .join('');
+                            case 'url':
+                                return decodeURIComponent(item);
+                            case 'unicode':
+                                return item.replace(/\\u([a-fA-F0-9]{4})/g, (match, hex) => 
+                                    String.fromCharCode(parseInt(hex, 16))
+                                );
+                            case 'html':
+                                return item.replace(/&#(\d+);/g, (match, num) => 
+                                    String.fromCharCode(parseInt(num, 10))
+                                );
+                            case 'morse':
+                                return item.split(/\s+/).map(code => {
+                                    return morseToChar[code] || code;
+                                }).join('');
+                            default:
+                                return item;
+                        }
+                    } catch (error) {
+                        return `[解码错误: ${error.message}]`;
+                    }
+                }).join(batchMode === 'line' ? '\n' : '');
+                
+                output.value = result;
+                
+                // 添加到历史记录
+                addToHistory({
+                    input: text.substr(0, 20) + (text.length > 20 ? '...' : ''),
+                    fromBase: `${encodingType}→文本`,
+                    result: '已解码',
+                    timestamp: new Date().toLocaleString()
+                });
+            } catch (error) {
+                console.error('解码错误:', error);
+                alert(`解码错误: ${error.message}`);
+                output.value = `解码错误: ${error.message}\n原文本: ${text}`;
+            }
+        }
+        
+        // 浮点数特殊值处理
+        window.useSpecialFloat = function(value) {
+            document.getElementById('floatInput').value = value;
+        };
+        
+        // 十六进制浮点数解析
+        window.convertHexToFloat = function() {
+            const hexValue = document.getElementById('hexFloat').value.trim();
+            const format = document.getElementById('floatFormat').value;
+            
+            if (!hexValue) return;
+            
+            try {
+                let floatValue;
+                let normalizedHex = hexValue.startsWith('0x') ? hexValue : '0x' + hexValue;
+                
+                if (format === 'binary32') {
+                    // 32位单精度
+                    const intValue = parseInt(normalizedHex, 16);
+                    const buffer = new ArrayBuffer(4);
+                    const view = new DataView(buffer);
+                    view.setUint32(0, intValue);
+                    floatValue = view.getFloat32(0);
+                } else {
+                    // 64位双精度
+                    // 处理16字符的十六进制（64位）
+                    const highStr = normalizedHex.slice(0, 10); // 0x + 前8字符
+                    const lowStr = '0x' + normalizedHex.slice(10, 18); // 0x + 后8字符
+                    
+                    const high = parseInt(highStr, 16);
+                    const low = parseInt(lowStr, 16);
+                    
+                    const buffer = new ArrayBuffer(8);
+                    const view = new DataView(buffer);
+                    view.setUint32(0, high);
+                    view.setUint32(4, low);
+                    floatValue = view.getFloat64(0);
+                }
+                
+                // 设置浮点数输入框
+                document.getElementById('floatInput').value = floatValue;
+                
+                // 执行转换
+                convertFloat();
+            } catch (error) {
+                console.error('十六进制浮点数解析错误:', error);
+                alert(`解析错误: ${error.message}`);
+            }
+        };
+        
+        // 浮点数转换函数
+        function convertFloat() {
+            document.getElementById('floatResultCard').style.display = 'none';
+            
+            const floatInput = document.getElementById('floatInput').value.trim();
+            const format = document.getElementById('floatFormat').value;
+            
+            if (!floatInput) return;
+            
+            try {
+                let floatValue;
+                
+                // 处理特殊值
+                switch (floatInput.toLowerCase()) {
+                    case 'nan':
+                        floatValue = NaN;
+                        break;
+                    case 'infinity':
+                    case '+infinity':
+                        floatValue = Infinity;
+                        break;
+                    case '-infinity':
+                        floatValue = -Infinity;
+                        break;
+                    case '-0':
+                        floatValue = -0;
+                        break;
+                    default:
+                        floatValue = parseFloat(floatInput);
+                }
+                
+                if (isNaN(floatValue) && floatInput.toLowerCase() !== 'nan') {
+                    throw new Error('无效的浮点数');
+                }
+                
+                // IEEE 754浮点数表示
+                let binary, exponent, mantissa, sign;
+                let hex, formula;
+                let signValue, exponentValue, mantissaValue, finalValue;
+                
+                if (format === 'binary32') {
+                    // 单精度 (32位)
+                    const buffer = new ArrayBuffer(4);
+                    const view = new DataView(buffer);
+                    view.setFloat32(0, floatValue);
+                    
+                    // 获取原始二进制表示
+                    const int32Value = view.getUint32(0);
+                    binary = int32Value.toString(2).padStart(32, '0');
+                    
+                    // 提取各部分
+                    sign = binary.charAt(0);
+                    exponent = binary.substring(1, 9);
+                    mantissa = binary.substring(9);
+                    
+                    // 十六进制表示
+                    hex = '0x' + int32Value.toString(16).toUpperCase().padStart(8, '0');
+                    
+                    // 计算实际值
+                    const expVal = parseInt(exponent, 2);
+                    
+                    // 处理特殊情况
+                    if (expVal === 0) {
+                        // 非规格化数或零
+                        if (parseInt(mantissa, 2) === 0) {
+                            // 零
+                            signValue = sign === '0' ? '+' : '-';
+                            exponentValue = '0';
+                            mantissaValue = '0.0';
+                            formula = `${signValue}0 × 2<sup>-126</sup>`;
+                            finalValue = sign === '0' ? '+0' : '-0';
+                        } else {
+                            // 非规格化数
+                            signValue = sign === '0' ? '+' : '-';
+                            exponentValue = '-126 (非规格化)';
+                            mantissaValue = '0.' + mantissa;
+                            const mValue = parseInt(mantissa, 2) / Math.pow(2, 23);
+                            formula = `${signValue}${mValue} × 2<sup>-126</sup>`;
+                            finalValue = signValue + (mValue * Math.pow(2, -126));
+                        }
+                    } else if (expVal === 255) {
+                        // 无穷大或NaN
+                        if (parseInt(mantissa, 2) === 0) {
+                            // 无穷大
+                            signValue = sign === '0' ? '+' : '-';
+                            exponentValue = '无穷大';
+                            mantissaValue = '0.0';
+                            formula = `${signValue}∞`;
+                            finalValue = sign === '0' ? '+∞' : '-∞';
+                        } else {
+                            // NaN
+                            signValue = 'N/A';
+                            exponentValue = 'N/A';
+                            mantissaValue = 'N/A';
+                            formula = 'NaN (非数值)';
+                            finalValue = 'NaN';
+                        }
+                    } else {
+                        // 规格化数
+                        const actualExp = expVal - 127;
+                        signValue = sign === '0' ? '+' : '-';
+                        exponentValue = `${expVal} - 127 = ${actualExp}`;
+                        mantissaValue = '1.' + mantissa;
+                        const mValue = 1 + parseInt(mantissa, 2) / Math.pow(2, 23);
+                        formula = `${signValue}${mValue} × 2<sup>${actualExp}</sup>`;
+                        finalValue = floatValue;
+                    }
+                } else {
+                    // 双精度 (64位)
+                    const buffer = new ArrayBuffer(8);
+                    const view = new DataView(buffer);
+                    view.setFloat64(0, floatValue);
+                    
+                    // 获取原始二进制表示 (注意端序)
+                    const highWord = view.getUint32(0);
+                    const lowWord = view.getUint32(4);
+                    
+                    const highBits = highWord.toString(2).padStart(32, '0');
+                    const lowBits = lowWord.toString(2).padStart(32, '0');
+                    binary = highBits + lowBits;
+                    
+                    // 提取各部分
+                    sign = binary.charAt(0);
+                    exponent = binary.substring(1, 12);
+                    mantissa = binary.substring(12);
+                    
+                    // 十六进制表示
+                    hex = '0x' + highWord.toString(16).toUpperCase().padStart(8, '0') + 
+                          lowWord.toString(16).toUpperCase().padStart(8, '0');
+                    
+                    // 计算实际值
+                    const expVal = parseInt(exponent, 2);
+                    
+                    // 处理特殊情况
+                    if (expVal === 0) {
+                        // 非规格化数或零
+                        if (parseInt(mantissa, 2) === 0) {
+                            // 零
+                            signValue = sign === '0' ? '+' : '-';
+                            exponentValue = '0';
+                            mantissaValue = '0.0';
+                            formula = `${signValue}0 × 2<sup>-1022</sup>`;
+                            finalValue = sign === '0' ? '+0' : '-0';
+                        } else {
+                            // 非规格化数
+                            signValue = sign === '0' ? '+' : '-';
+                            exponentValue = '-1022 (非规格化)';
+                            mantissaValue = '0.' + mantissa;
+                            const mValue = parseInt(mantissa, 2) / Math.pow(2, 52);
+                            formula = `${signValue}${mValue} × 2<sup>-1022</sup>`;
+                            finalValue = signValue + (mValue * Math.pow(2, -1022));
+                        }
+                    } else if (expVal === 2047) {
+                        // 无穷大或NaN
+                        if (parseInt(mantissa, 2) === 0) {
+                            // 无穷大
+                            signValue = sign === '0' ? '+' : '-';
+                            exponentValue = '无穷大';
+                            mantissaValue = '0.0';
+                            formula = `${signValue}∞`;
+                            finalValue = sign === '0' ? '+∞' : '-∞';
+                        } else {
+                            // NaN
+                            signValue = 'N/A';
+                            exponentValue = 'N/A';
+                            mantissaValue = 'N/A';
+                            formula = 'NaN (非数值)';
+                            finalValue = 'NaN';
+                        }
+                    } else {
+                        // 规格化数
+                        const actualExp = expVal - 1023;
+                        signValue = sign === '0' ? '+' : '-';
+                        exponentValue = `${expVal} - 1023 = ${actualExp}`;
+                        mantissaValue = '1.' + mantissa;
+                        const mValue = 1 + parseInt(mantissa, 2) / Math.pow(2, 52);
+                        formula = `${signValue}${mValue.toFixed(16)} × 2<sup>${actualExp}</sup>`;
+                        finalValue = floatValue;
+                    }
+                }
+                
+                // 显示结果卡片
+                document.getElementById('floatResultCard').style.display = 'block';
+                
+                // 更新UI
+                // 二进制可视化
+                let binaryHTML = '';
+                
+                if (format === 'binary32') {
+                    // 单精度格式化
+                    binaryHTML = `<span class="bg-danger text-white p-1">${sign}</span> `;
+                    binaryHTML += `<span class="bg-primary text-white p-1">${exponent}</span> `;
+                    binaryHTML += `<span class="bg-success text-white p-1">${mantissa}</span>`;
+                } else {
+                    // 双精度格式化
+                    binaryHTML = `<span class="bg-danger text-white p-1">${sign}</span> `;
+                    binaryHTML += `<span class="bg-primary text-white p-1">${exponent}</span> `;
+                    
+                    // 更易读的尾数分组
+                    let formattedMantissa = '';
+                    for (let i = 0; i < mantissa.length; i++) {
+                        formattedMantissa += mantissa[i];
+                        if ((i + 1) % 8 === 0 && i < mantissa.length - 1) {
+                            formattedMantissa += ' ';
+                        }
+                    }
+                    
+                    binaryHTML += `<span class="bg-success text-white p-1">${formattedMantissa}</span>`;
+                }
+                
+                document.getElementById('floatBinary').innerHTML = binaryHTML;
+                
+                // 各部分详细信息
+                document.getElementById('signBit').innerHTML = sign;
+                document.getElementById('signValue').innerHTML = signValue;
+                
+                document.getElementById('exponentBits').innerHTML = exponent;
+                document.getElementById('exponentValue').innerHTML = exponentValue;
+                
+                document.getElementById('mantissaBits').innerHTML = mantissa;
+                document.getElementById('mantissaValue').innerHTML = mantissaValue;
+                
+                document.getElementById('floatHex').innerHTML = hex;
+                document.getElementById('floatFormula').innerHTML = formula;
+                document.getElementById('floatFinalValue').innerHTML = finalValue;
+                
+                // 添加到历史记录
+                addToHistory({
+                    input: floatInput,
+                    fromBase: '浮点数',
+                    result: format,
+                    timestamp: new Date().toLocaleString()
+                });
+            } catch (error) {
+                console.error('浮点数转换错误:', error);
+                alert(`浮点数转换错误: ${error.message}`);
+            }
+        }
+        
+        // 初始化执行
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // 关闭表达式计算模态框
+        const expressionModal = document.getElementById('expressionModal');
+        if (expressionModal) {
+            expressionModal.style.display = 'none';
+            expressionModal.classList.remove('show');
+            document.body.classList.remove('modal-open');
+            
+            // 移除背景遮罩
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+    </script>
+</body>
+</html> 

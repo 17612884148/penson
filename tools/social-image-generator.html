@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>社交媒体图片生成器 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .canvas-container {
+            position: relative;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        #social-canvas {
+            background-color: white;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .template-item {
+            cursor: pointer;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            padding: 5px;
+            transition: all 0.2s;
+        }
+        
+        .template-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .template-item.active {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        
+        .template-item img {
+            width: 100%;
+            border-radius: 4px;
+            height: auto;
+        }
+        
+        .control-panel {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .tab-content {
+            padding-top: 20px;
+        }
+        
+        .preview-panel {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            padding: 0;
+            border: none;
+            border-radius: 4px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        .download-btn {
+            margin-top: 20px;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .canvas-container {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#popular">热门工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#about">关于我们</a>
+                    </li>
+                    <li class="nav-item ms-2 d-flex align-items-center">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="dark-mode-toggle">
+                            <label class="form-check-label text-white" for="dark-mode-toggle">
+                                <i class="bi bi-moon-stars"></i>
+                            </label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面内容 -->
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-images me-2 text-primary"></i>社交媒体图片生成器</h1>
+                <p class="lead">轻松创建适配各大平台的精美社交媒体图片，提升品牌影响力</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html#营销工具">营销工具</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">社交媒体图片生成器</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="tool-icons mt-md-4">
+                    <span class="badge rounded-pill bg-primary me-2">
+                        <i class="bi bi-megaphone me-1"></i> 营销工具
+                    </span>
+                    <span class="badge rounded-pill bg-success me-2">
+                        <i class="bi bi-palette me-1"></i> 本地处理
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- 主内容区域 -->
+            <div class="col-lg-8">
+                <!-- 画布容器 -->
+                <div class="canvas-container">
+                    <canvas id="social-canvas" width="1200" height="630"></canvas>
+                </div>
+                
+                <!-- 预览和下载按钮 -->
+                <div class="preview-panel">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="canvas-dimensions">
+                            <select id="dimension-select" class="form-select">
+                                <option value="facebook">Facebook封面图 (1200×630px)</option>
+                                <option value="instagram">Instagram帖子 (1080×1080px)</option>
+                                <option value="twitter">Twitter帖子 (1200×675px)</option>
+                                <option value="linkedin">LinkedIn封面 (1584×396px)</option>
+                                <option value="pinterest">Pinterest图片 (1000×1500px)</option>
+                                <option value="weibo">微博封面 (1200×600px)</option>
+                                <option value="wechat">微信公众号封面 (900×500px)</option>
+                                <option value="custom">自定义尺寸</option>
+                            </select>
+                        </div>
+                        <div class="download-options">
+                            <button id="download-btn" class="btn btn-success">
+                                <i class="bi bi-download me-2"></i>下载图片
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 自定义尺寸选项 -->
+                    <div id="custom-dimensions" class="mt-3" style="display: none;">
+                        <div class="row g-2">
+                            <div class="col">
+                                <div class="input-group">
+                                    <span class="input-group-text">宽度</span>
+                                    <input type="number" id="custom-width" class="form-control" value="1200" min="100" max="3000">
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <span class="input-group-text">高度</span>
+                                    <input type="number" id="custom-height" class="form-control" value="630" min="100" max="3000">
+                                    <span class="input-group-text">px</span>
+                                </div>
+                            </div>
+                            <div class="col-auto">
+                                <button id="apply-dimensions" class="btn btn-primary">应用</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 模板选择区域 -->
+                <div class="mt-4">
+                    <h5>选择模板</h5>
+                    <div class="row row-cols-2 row-cols-md-4 g-3" id="templates-container">
+                        <!-- 模板项目将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 控制面板 -->
+            <div class="col-lg-4">
+                <div class="control-panel">
+                    <ul class="nav nav-tabs" id="controlTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-content" type="button" role="tab">文本</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="background-tab" data-bs-toggle="tab" data-bs-target="#background-content" type="button" role="tab">背景</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="image-tab" data-bs-toggle="tab" data-bs-target="#image-content" type="button" role="tab">图片</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="elements-tab" data-bs-toggle="tab" data-bs-target="#elements-content" type="button" role="tab">元素</button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="controlTabsContent">
+                        <!-- 文本控制面板 -->
+                        <div class="tab-pane fade show active" id="text-content" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="heading-text" class="form-label">标题文字</label>
+                                <input type="text" class="form-control" id="heading-text" placeholder="输入标题">
+                            </div>
+                            <div class="mb-3">
+                                <label for="subheading-text" class="form-label">副标题文字</label>
+                                <input type="text" class="form-control" id="subheading-text" placeholder="输入副标题">
+                            </div>
+                            <div class="mb-3">
+                                <label for="desc-text" class="form-label">描述文字</label>
+                                <textarea class="form-control" id="desc-text" rows="2" placeholder="输入描述内容"></textarea>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="heading-color" class="form-label">标题颜色</label>
+                                    <div class="input-group">
+                                        <input type="color" class="color-picker" id="heading-color" value="#ffffff">
+                                        <input type="text" class="form-control" id="heading-color-hex" value="#ffffff">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="heading-size" class="form-label">字体大小</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="heading-size" value="48" min="10" max="200">
+                                        <span class="input-group-text">px</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="heading-font" class="form-label">字体选择</label>
+                                    <select class="form-select" id="heading-font">
+                                        <option value="Arial, sans-serif">Arial</option>
+                                        <option value="'Helvetica Neue', Helvetica, sans-serif">Helvetica</option>
+                                        <option value="'Times New Roman', serif">Times New Roman</option>
+                                        <option value="Georgia, serif">Georgia</option>
+                                        <option value="'Microsoft YaHei', 微软雅黑, sans-serif">微软雅黑</option>
+                                        <option value="'PingFang SC', 苹方, sans-serif">苹方</option>
+                                        <option value="'Noto Sans SC', sans-serif">Noto Sans SC</option>
+                                        <option value="'Source Han Sans CN', sans-serif">思源黑体</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="heading-weight" class="form-label">字体粗细</label>
+                                    <select class="form-select" id="heading-weight">
+                                        <option value="normal">正常</option>
+                                        <option value="bold" selected>粗体</option>
+                                        <option value="lighter">细体</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">文本对齐</label>
+                                <div class="btn-group w-100">
+                                    <button type="button" class="btn btn-outline-primary text-align-btn" data-align="left">
+                                        <i class="bi bi-text-left"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary text-align-btn active" data-align="center">
+                                        <i class="bi bi-text-center"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary text-align-btn" data-align="right">
+                                        <i class="bi bi-text-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 背景控制面板 -->
+                        <div class="tab-pane fade" id="background-content" role="tabpanel">
+                            <div class="mb-3">
+                                <label class="form-label">背景类型</label>
+                                <div class="btn-group w-100">
+                                    <button type="button" class="btn btn-outline-primary bg-type-btn active" data-type="color">
+                                        <i class="bi bi-palette"></i> 纯色
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary bg-type-btn" data-type="gradient">
+                                        <i class="bi bi-gradient"></i> 渐变
+                                    </button>
+                                    <button type="button" class="btn btn-outline-primary bg-type-btn" data-type="image">
+                                        <i class="bi bi-image"></i> 图片
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- 纯色背景选项 -->
+                            <div id="bg-color-options">
+                                <div class="mb-3">
+                                    <label for="bg-color" class="form-label">背景颜色</label>
+                                    <div class="input-group">
+                                        <input type="color" class="color-picker" id="bg-color" value="#4e73df">
+                                        <input type="text" class="form-control" id="bg-color-hex" value="#4e73df">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">预设颜色</label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <div class="preset-color" data-color="#4e73df" style="background-color: #4e73df;"></div>
+                                        <div class="preset-color" data-color="#1cc88a" style="background-color: #1cc88a;"></div>
+                                        <div class="preset-color" data-color="#36b9cc" style="background-color: #36b9cc;"></div>
+                                        <div class="preset-color" data-color="#f6c23e" style="background-color: #f6c23e;"></div>
+                                        <div class="preset-color" data-color="#e74a3b" style="background-color: #e74a3b;"></div>
+                                        <div class="preset-color" data-color="#5a5c69" style="background-color: #5a5c69;"></div>
+                                        <div class="preset-color" data-color="#ffffff" style="background-color: #ffffff; border: 1px solid #dee2e6;"></div>
+                                        <div class="preset-color" data-color="#000000" style="background-color: #000000;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 渐变背景选项 -->
+                            <div id="bg-gradient-options" style="display: none;">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="gradient-start" class="form-label">起始颜色</label>
+                                        <div class="input-group">
+                                            <input type="color" class="color-picker" id="gradient-start" value="#4e73df">
+                                            <input type="text" class="form-control" id="gradient-start-hex" value="#4e73df">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="gradient-end" class="form-label">结束颜色</label>
+                                        <div class="input-group">
+                                            <input type="color" class="color-picker" id="gradient-end" value="#36b9cc">
+                                            <input type="text" class="form-control" id="gradient-end-hex" value="#36b9cc">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="gradient-direction" class="form-label">渐变方向</label>
+                                    <select class="form-select" id="gradient-direction">
+                                        <option value="to right">从左到右</option>
+                                        <option value="to bottom">从上到下</option>
+                                        <option value="to right bottom">左上到右下</option>
+                                        <option value="to left bottom">右上到左下</option>
+                                        <option value="circle at center">中心辐射</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">预设渐变</label>
+                                    <div class="preset-gradients d-flex flex-wrap gap-2">
+                                        <!-- 预设渐变通过JS动态添加 -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 图片背景选项 -->
+                            <div id="bg-image-options" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="bg-image-upload" class="form-label">上传背景图片</label>
+                                    <input class="form-control" type="file" id="bg-image-upload" accept="image/*">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bg-image-opacity" class="form-label">图片透明度: <span id="bg-opacity-value">100%</span></label>
+                                    <input type="range" class="form-range" id="bg-image-opacity" min="0" max="100" value="100">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bg-image-overlay" class="form-label">叠加颜色</label>
+                                    <div class="input-group">
+                                        <input type="color" class="color-picker" id="bg-image-overlay" value="#000000">
+                                        <input type="text" class="form-control" id="bg-overlay-hex" value="#000000">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="bg-overlay-opacity" class="form-label">叠加透明度: <span id="overlay-opacity-value">0%</span></label>
+                                    <input type="range" class="form-range" id="bg-overlay-opacity" min="0" max="100" value="0">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 图片控制面板 -->
+                        <div class="tab-pane fade" id="image-content" role="tabpanel">
+                            <div class="mb-3">
+                                <label for="logo-upload" class="form-label">上传Logo或图片</label>
+                                <input class="form-control" type="file" id="logo-upload" accept="image/*">
+                            </div>
+                            
+                            <div id="logo-controls" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="logo-size" class="form-label">Logo大小: <span id="logo-size-value">100px</span></label>
+                                    <input type="range" class="form-range" id="logo-size" min="20" max="400" value="100">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Logo位置</label>
+                                    <div class="position-controls d-flex justify-content-around">
+                                        <button class="btn btn-outline-primary logo-position" data-pos="top-left">
+                                            <i class="bi bi-arrow-up-left-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary logo-position" data-pos="top">
+                                            <i class="bi bi-arrow-up-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary logo-position" data-pos="top-right">
+                                            <i class="bi bi-arrow-up-right-square"></i>
+                                        </button>
+                                    </div>
+                                    <div class="position-controls d-flex justify-content-around mt-2">
+                                        <button class="btn btn-outline-primary logo-position" data-pos="left">
+                                            <i class="bi bi-arrow-left-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary logo-position active" data-pos="center">
+                                            <i class="bi bi-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary logo-position" data-pos="right">
+                                            <i class="bi bi-arrow-right-square"></i>
+                                        </button>
+                                    </div>
+                                    <div class="position-controls d-flex justify-content-around mt-2">
+                                        <button class="btn btn-outline-primary logo-position" data-pos="bottom-left">
+                                            <i class="bi bi-arrow-down-left-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary logo-position" data-pos="bottom">
+                                            <i class="bi bi-arrow-down-square"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary logo-position" data-pos="bottom-right">
+                                            <i class="bi bi-arrow-down-right-square"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 元素控制面板 -->
+                        <div class="tab-pane fade" id="elements-content" role="tabpanel">
+                            <div class="mb-3">
+                                <label class="form-label">装饰元素</label>
+                                <div class="elements-container d-flex flex-wrap gap-2">
+                                    <!-- 元素通过JS动态添加 -->
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="element-color" class="form-label">元素颜色</label>
+                                <div class="input-group">
+                                    <input type="color" class="color-picker" id="element-color" value="#ffffff">
+                                    <input type="text" class="form-control" id="element-color-hex" value="#ffffff">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="element-opacity" class="form-label">元素透明度: <span id="element-opacity-value">50%</span></label>
+                                <input type="range" class="form-range" id="element-opacity" min="0" max="100" value="50">
+                            </div>
+                            
+                            <div id="active-element-controls" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="element-size" class="form-label">元素大小: <span id="element-size-value">100px</span></label>
+                                    <input type="range" class="form-range" id="element-size" min="20" max="500" value="100">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="element-rotation" class="form-label">旋转角度: <span id="element-rotation-value">0°</span></label>
+                                    <input type="range" class="form-range" id="element-rotation" min="0" max="360" value="0">
+                                </div>
+                                
+                                <button id="remove-element" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash me-1"></i>删除元素
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 使用说明 -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">使用说明</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>选择您需要的社交媒体平台和图片尺寸</li>
+                            <li>选择模板或自定义背景、文本和元素</li>
+                            <li>调整文本、图片和装饰元素的布局和样式</li>
+                            <li>添加您的品牌Logo</li>
+                            <li>预览效果并下载图片</li>
+                        </ol>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>
+                            所有图片编辑和处理都在您的浏览器本地完成，不会上传到服务器，保护您的创作隐私
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 全局变量
+        const canvas = document.getElementById('social-canvas');
+        const ctx = canvas.getContext('2d');
+        let currentBackground = {
+            type: 'color',
+            color: '#4e73df',
+            gradient: {
+                start: '#4e73df',
+                end: '#36b9cc',
+                direction: 'to right'
+            },
+            image: null,
+            imageOpacity: 1,
+            overlay: '#000000',
+            overlayOpacity: 0
+        };
+        
+        let textSettings = {
+            heading: {
+                text: '添加您的标题文字',
+                font: 'Arial, sans-serif',
+                size: 48,
+                weight: 'bold',
+                color: '#ffffff',
+                align: 'center'
+            },
+            subheading: {
+                text: '添加副标题',
+                font: 'Arial, sans-serif',
+                size: 28,
+                weight: 'normal',
+                color: '#ffffff',
+                align: 'center'
+            },
+            description: {
+                text: '添加一些描述性文字',
+                font: 'Arial, sans-serif',
+                size: 18,
+                weight: 'normal',
+                color: '#ffffff',
+                align: 'center'
+            }
+        };
+        
+        let logoSettings = {
+            image: null,
+            size: 100,
+            position: 'center'
+        };
+        
+        let elements = [];
+        let activeElement = null;
+        let templates = [];
+        
+        // 初始化函数
+        function init() {
+            // 设置初始画布尺寸
+            updateCanvasDimensions('facebook');
+            
+            // 注册事件监听器
+            setupEventListeners();
+            
+            // 加载预设模板
+            loadTemplates();
+            
+            // 初始化渲染
+            renderCanvas();
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 尺寸选择器事件
+            document.getElementById('dimension-select').addEventListener('change', function(e) {
+                const dimension = e.target.value;
+                if (dimension === 'custom') {
+                    document.getElementById('custom-dimensions').style.display = 'block';
+                } else {
+                    document.getElementById('custom-dimensions').style.display = 'none';
+                    updateCanvasDimensions(dimension);
+                }
+            });
+            
+            // 自定义尺寸应用按钮
+            document.getElementById('apply-dimensions').addEventListener('click', function() {
+                const width = parseInt(document.getElementById('custom-width').value);
+                const height = parseInt(document.getElementById('custom-height').value);
+                
+                if (width >= 100 && width <= 3000 && height >= 100 && height <= 3000) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    renderCanvas();
+                } else {
+                    alert('请输入有效的尺寸 (宽度和高度在100-3000像素之间)');
+                }
+            });
+            
+            // 下载按钮事件
+            document.getElementById('download-btn').addEventListener('click', downloadImage);
+            
+            // 文本输入事件
+            document.getElementById('heading-text').addEventListener('input', function(e) {
+                textSettings.heading.text = e.target.value;
+                renderCanvas();
+            });
+            
+            document.getElementById('subheading-text').addEventListener('input', function(e) {
+                textSettings.subheading.text = e.target.value;
+                renderCanvas();
+            });
+            
+            document.getElementById('desc-text').addEventListener('input', function(e) {
+                textSettings.description.text = e.target.value;
+                renderCanvas();
+            });
+            
+            // 颜色选择器事件
+            document.getElementById('heading-color').addEventListener('input', function(e) {
+                textSettings.heading.color = e.target.value;
+                document.getElementById('heading-color-hex').value = e.target.value;
+                renderCanvas();
+            });
+            
+            document.getElementById('heading-color-hex').addEventListener('input', function(e) {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    textSettings.heading.color = e.target.value;
+                    document.getElementById('heading-color').value = e.target.value;
+                    renderCanvas();
+                }
+            });
+            
+            // 字体大小事件
+            document.getElementById('heading-size').addEventListener('input', function(e) {
+                textSettings.heading.size = parseInt(e.target.value);
+                renderCanvas();
+            });
+            
+            // 字体选择事件
+            document.getElementById('heading-font').addEventListener('change', function(e) {
+                textSettings.heading.font = e.target.value;
+                renderCanvas();
+            });
+            
+            // 字体粗细事件
+            document.getElementById('heading-weight').addEventListener('change', function(e) {
+                textSettings.heading.weight = e.target.value;
+                renderCanvas();
+            });
+            
+            // 文本对齐事件
+            document.querySelectorAll('.text-align-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.text-align-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    textSettings.heading.align = this.dataset.align;
+                    textSettings.subheading.align = this.dataset.align;
+                    textSettings.description.align = this.dataset.align;
+                    renderCanvas();
+                });
+            });
+            
+            // 背景类型选择事件
+            document.querySelectorAll('.bg-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.bg-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const type = this.dataset.type;
+                    currentBackground.type = type;
+                    
+                    // 切换显示相应的选项
+                    document.getElementById('bg-color-options').style.display = type === 'color' ? 'block' : 'none';
+                    document.getElementById('bg-gradient-options').style.display = type === 'gradient' ? 'block' : 'none';
+                    document.getElementById('bg-image-options').style.display = type === 'image' ? 'block' : 'none';
+                    
+                    renderCanvas();
+                });
+            });
+            
+            // 背景颜色事件
+            document.getElementById('bg-color').addEventListener('input', function(e) {
+                currentBackground.color = e.target.value;
+                document.getElementById('bg-color-hex').value = e.target.value;
+                renderCanvas();
+            });
+            
+            document.getElementById('bg-color-hex').addEventListener('input', function(e) {
+                if (/^#[0-9A-F]{6}$/i.test(e.target.value)) {
+                    currentBackground.color = e.target.value;
+                    document.getElementById('bg-color').value = e.target.value;
+                    renderCanvas();
+                }
+            });
+            
+            // 预设颜色点击事件
+            document.querySelectorAll('.preset-color').forEach(color => {
+                color.addEventListener('click', function() {
+                    const colorValue = this.dataset.color;
+                    currentBackground.color = colorValue;
+                    document.getElementById('bg-color').value = colorValue;
+                    document.getElementById('bg-color-hex').value = colorValue;
+                    renderCanvas();
+                });
+            });
+            
+            // 渐变颜色事件
+            document.getElementById('gradient-start').addEventListener('input', function(e) {
+                currentBackground.gradient.start = e.target.value;
+                document.getElementById('gradient-start-hex').value = e.target.value;
+                renderCanvas();
+            });
+            
+            document.getElementById('gradient-end').addEventListener('input', function(e) {
+                currentBackground.gradient.end = e.target.value;
+                document.getElementById('gradient-end-hex').value = e.target.value;
+                renderCanvas();
+            });
+            
+            // 渐变方向事件
+            document.getElementById('gradient-direction').addEventListener('change', function(e) {
+                currentBackground.gradient.direction = e.target.value;
+                renderCanvas();
+            });
+            
+            // 图片上传事件
+            document.getElementById('bg-image-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = new Image();
+                        img.onload = function() {
+                            currentBackground.image = img;
+                            renderCanvas();
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // 图片透明度事件
+            document.getElementById('bg-image-opacity').addEventListener('input', function(e) {
+                currentBackground.imageOpacity = parseInt(e.target.value) / 100;
+                document.getElementById('bg-opacity-value').textContent = e.target.value + '%';
+                renderCanvas();
+            });
+            
+            // 叠加颜色事件
+            document.getElementById('bg-image-overlay').addEventListener('input', function(e) {
+                currentBackground.overlay = e.target.value;
+                document.getElementById('bg-overlay-hex').value = e.target.value;
+                renderCanvas();
+            });
+            
+            // 叠加透明度事件
+            document.getElementById('bg-overlay-opacity').addEventListener('input', function(e) {
+                currentBackground.overlayOpacity = parseInt(e.target.value) / 100;
+                document.getElementById('overlay-opacity-value').textContent = e.target.value + '%';
+                renderCanvas();
+            });
+            
+            // Logo上传事件
+            document.getElementById('logo-upload').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        const img = new Image();
+                        img.onload = function() {
+                            logoSettings.image = img;
+                            document.getElementById('logo-controls').style.display = 'block';
+                            renderCanvas();
+                        };
+                        img.src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            // Logo大小事件
+            document.getElementById('logo-size').addEventListener('input', function(e) {
+                logoSettings.size = parseInt(e.target.value);
+                document.getElementById('logo-size-value').textContent = e.target.value + 'px';
+                renderCanvas();
+            });
+            
+            // Logo位置事件
+            document.querySelectorAll('.logo-position').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.logo-position').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    logoSettings.position = this.dataset.pos;
+                    renderCanvas();
+                });
+            });
+            
+            // 元素透明度事件
+            document.getElementById('element-opacity').addEventListener('input', function(e) {
+                document.getElementById('element-opacity-value').textContent = e.target.value + '%';
+                if (activeElement) {
+                    activeElement.opacity = parseInt(e.target.value) / 100;
+                    renderCanvas();
+                }
+            });
+            
+            // 元素大小事件
+            document.getElementById('element-size').addEventListener('input', function(e) {
+                document.getElementById('element-size-value').textContent = e.target.value + 'px';
+                if (activeElement) {
+                    activeElement.size = parseInt(e.target.value);
+                    renderCanvas();
+                }
+            });
+            
+            // 元素旋转事件
+            document.getElementById('element-rotation').addEventListener('input', function(e) {
+                document.getElementById('element-rotation-value').textContent = e.target.value + '°';
+                if (activeElement) {
+                    activeElement.rotation = parseInt(e.target.value);
+                    renderCanvas();
+                }
+            });
+            
+            // 删除元素事件
+            document.getElementById('remove-element').addEventListener('click', function() {
+                if (activeElement) {
+                    elements = elements.filter(el => el !== activeElement);
+                    activeElement = null;
+                    document.getElementById('active-element-controls').style.display = 'none';
+                    renderCanvas();
+                }
+            });
+        }
+        
+        // 更新画布尺寸函数
+        function updateCanvasDimensions(dimensionType) {
+            switch(dimensionType) {
+                case 'facebook':
+                    canvas.width = 1200;
+                    canvas.height = 630;
+                    break;
+                case 'instagram':
+                    canvas.width = 1080;
+                    canvas.height = 1080;
+                    break;
+                case 'twitter':
+                    canvas.width = 1200;
+                    canvas.height = 675;
+                    break;
+                case 'linkedin':
+                    canvas.width = 1584;
+                    canvas.height = 396;
+                    break;
+                case 'pinterest':
+                    canvas.width = 1000;
+                    canvas.height = 1500;
+                    break;
+                case 'weibo':
+                    canvas.width = 1200;
+                    canvas.height = 600;
+                    break;
+                case 'wechat':
+                    canvas.width = 900;
+                    canvas.height = 500;
+                    break;
+                default:
+                    canvas.width = 1200;
+                    canvas.height = 630;
+            }
+            
+            // 更新自定义尺寸输入框的值
+            document.getElementById('custom-width').value = canvas.width;
+            document.getElementById('custom-height').value = canvas.height;
+            
+            renderCanvas();
+        }
+        
+        // 加载预设模板
+        function loadTemplates() {
+            // 模板定义
+            templates = [
+                {
+                    name: '商务蓝',
+                    background: {
+                        type: 'gradient',
+                        gradient: {
+                            start: '#4e73df',
+                            end: '#224abe',
+                            direction: 'to right'
+                        }
+                    },
+                    textColor: '#ffffff'
+                },
+                {
+                    name: '清新绿',
+                    background: {
+                        type: 'gradient',
+                        gradient: {
+                            start: '#1cc88a',
+                            end: '#169a6d',
+                            direction: 'to bottom'
+                        }
+                    },
+                    textColor: '#ffffff'
+                },
+                {
+                    name: '简约黑',
+                    background: {
+                        type: 'color',
+                        color: '#2c2c2c'
+                    },
+                    textColor: '#ffffff'
+                },
+                {
+                    name: '科技蓝',
+                    background: {
+                        type: 'gradient',
+                        gradient: {
+                            start: '#36b9cc',
+                            end: '#258391',
+                            direction: 'to right bottom'
+                        }
+                    },
+                    textColor: '#ffffff'
+                },
+                {
+                    name: '温暖橙',
+                    background: {
+                        type: 'gradient',
+                        gradient: {
+                            start: '#f6c23e',
+                            end: '#e0a800',
+                            direction: 'to right'
+                        }
+                    },
+                    textColor: '#2c2c2c'
+                },
+                {
+                    name: '活力红',
+                    background: {
+                        type: 'gradient',
+                        gradient: {
+                            start: '#e74a3b',
+                            end: '#be2617',
+                            direction: 'to right'
+                        }
+                    },
+                    textColor: '#ffffff'
+                },
+                {
+                    name: '简约白',
+                    background: {
+                        type: 'color',
+                        color: '#ffffff'
+                    },
+                    textColor: '#2c2c2c'
+                },
+                {
+                    name: '深蓝夜空',
+                    background: {
+                        type: 'gradient',
+                        gradient: {
+                            start: '#1a2b49',
+                            end: '#000c24',
+                            direction: 'to bottom'
+                        }
+                    },
+                    textColor: '#ffffff'
+                }
+            ];
+            
+            // 渲染模板到界面
+            const container = document.getElementById('templates-container');
+            templates.forEach((template, index) => {
+                const templateItem = document.createElement('div');
+                templateItem.className = 'col';
+                
+                let previewStyle = '';
+                if (template.background.type === 'color') {
+                    previewStyle = `background-color: ${template.background.color};`;
+                } else if (template.background.type === 'gradient') {
+                    previewStyle = `background-image: linear-gradient(${template.background.gradient.direction}, ${template.background.gradient.start}, ${template.background.gradient.end});`;
+                }
+                
+                templateItem.innerHTML = `
+                    <div class="template-item" data-index="${index}">
+                        <div class="template-preview" style="${previewStyle}">
+                            <div class="template-text" style="color: ${template.textColor};">Aa</div>
+                        </div>
+                        <div class="template-name">${template.name}</div>
+                    </div>
+                `;
+                
+                container.appendChild(templateItem);
+                
+                // 添加点击事件
+                templateItem.querySelector('.template-item').addEventListener('click', function() {
+                    applyTemplate(index);
+                });
+            });
+            
+            // 加载预设渐变
+            const gradientContainer = document.querySelector('.preset-gradients');
+            const presetGradients = [
+                { start: '#6a11cb', end: '#2575fc', direction: 'to right' },
+                { start: '#ff9a9e', end: '#fad0c4', direction: 'to right' },
+                { start: '#fad0c4', end: '#ffd1ff', direction: 'to right' },
+                { start: '#a1c4fd', end: '#c2e9fb', direction: 'to right' },
+                { start: '#09203f', end: '#537895', direction: 'to right' },
+                { start: '#43e97b', end: '#38f9d7', direction: 'to right' },
+                { start: '#fa709a', end: '#fee140', direction: 'to right' },
+                { start: '#30cfd0', end: '#330867', direction: 'to right' }
+            ];
+            
+            presetGradients.forEach(gradient => {
+                const gradientItem = document.createElement('div');
+                gradientItem.className = 'preset-gradient';
+                gradientItem.style.backgroundImage = `linear-gradient(${gradient.direction}, ${gradient.start}, ${gradient.end})`;
+                gradientContainer.appendChild(gradientItem);
+                
+                // 添加点击事件
+                gradientItem.addEventListener('click', function() {
+                    currentBackground.gradient.start = gradient.start;
+                    currentBackground.gradient.end = gradient.end;
+                    currentBackground.gradient.direction = gradient.direction;
+                    
+                    document.getElementById('gradient-start').value = gradient.start;
+                    document.getElementById('gradient-start-hex').value = gradient.start;
+                    document.getElementById('gradient-end').value = gradient.end;
+                    document.getElementById('gradient-end-hex').value = gradient.end;
+                    document.getElementById('gradient-direction').value = gradient.direction;
+                    
+                    renderCanvas();
+                });
+            });
+            
+            // 加载装饰元素
+            const elementsContainer = document.querySelector('.elements-container');
+            const decorElements = [
+                { type: 'circle', name: '圆形' },
+                { type: 'square', name: '方形' },
+                { type: 'triangle', name: '三角形' },
+                { type: 'star', name: '星形' },
+                { type: 'wave', name: '波浪' },
+                { type: 'dots', name: '点阵' },
+                { type: 'lines', name: '线条' },
+                { type: 'zigzag', name: '锯齿线' }
+            ];
+            
+            decorElements.forEach(element => {
+                const elementItem = document.createElement('div');
+                elementItem.className = 'element-item';
+                elementItem.innerHTML = `
+                    <div class="element-preview">
+                        <i class="bi bi-${getElementIcon(element.type)}"></i>
+                    </div>
+                    <div class="element-name">${element.name}</div>
+                `;
+                elementsContainer.appendChild(elementItem);
+                
+                // 添加点击事件
+                elementItem.addEventListener('click', function() {
+                    addElement(element.type);
+                });
+            });
+        }
+        
+        // 获取元素对应的图标
+        function getElementIcon(type) {
+            switch(type) {
+                case 'circle': return 'circle';
+                case 'square': return 'square';
+                case 'triangle': return 'triangle';
+                case 'star': return 'star';
+                case 'wave': return 'water';
+                case 'dots': return 'grid-3x3';
+                case 'lines': return 'sliders';
+                case 'zigzag': return 'lightning';
+                default: return 'shape';
+            }
+        }
+        
+        // 应用模板
+        function applyTemplate(index) {
+            const template = templates[index];
+            
+            if (template.background.type === 'color') {
+                currentBackground.type = 'color';
+                currentBackground.color = template.background.color;
+                
+                // 更新UI
+                document.querySelectorAll('.bg-type-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.type === 'color') {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                document.getElementById('bg-color-options').style.display = 'block';
+                document.getElementById('bg-gradient-options').style.display = 'none';
+                document.getElementById('bg-image-options').style.display = 'none';
+                
+                document.getElementById('bg-color').value = template.background.color;
+                document.getElementById('bg-color-hex').value = template.background.color;
+            } else if (template.background.type === 'gradient') {
+                currentBackground.type = 'gradient';
+                currentBackground.gradient = { ...template.background.gradient };
+                
+                // 更新UI
+                document.querySelectorAll('.bg-type-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.type === 'gradient') {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                document.getElementById('bg-color-options').style.display = 'none';
+                document.getElementById('bg-gradient-options').style.display = 'block';
+                document.getElementById('bg-image-options').style.display = 'none';
+                
+                document.getElementById('gradient-start').value = template.background.gradient.start;
+                document.getElementById('gradient-start-hex').value = template.background.gradient.start;
+                document.getElementById('gradient-end').value = template.background.gradient.end;
+                document.getElementById('gradient-end-hex').value = template.background.gradient.end;
+                document.getElementById('gradient-direction').value = template.background.gradient.direction;
+            }
+            
+            // 更新文本颜色
+            textSettings.heading.color = template.textColor;
+            textSettings.subheading.color = template.textColor;
+            textSettings.description.color = template.textColor;
+            
+            document.getElementById('heading-color').value = template.textColor;
+            document.getElementById('heading-color-hex').value = template.textColor;
+            
+            renderCanvas();
+        }
+        
+        // 添加装饰元素
+        function addElement(type) {
+            const element = {
+                type: type,
+                x: canvas.width / 2,
+                y: canvas.height / 2,
+                size: 100,
+                color: document.getElementById('element-color').value,
+                opacity: parseInt(document.getElementById('element-opacity').value) / 100,
+                rotation: 0
+            };
+            
+            elements.push(element);
+            activeElement = element;
+            
+            document.getElementById('active-element-controls').style.display = 'block';
+            document.getElementById('element-size').value = element.size;
+            document.getElementById('element-size-value').textContent = element.size + 'px';
+            document.getElementById('element-rotation').value = element.rotation;
+            document.getElementById('element-rotation-value').textContent = element.rotation + '°';
+            
+            renderCanvas();
+        }
+        
+        // 渲染画布
+        function renderCanvas() {
+            // 清空画布
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制背景
+            drawBackground();
+            
+            // 绘制装饰元素
+            drawElements();
+            
+            // 绘制Logo
+            drawLogo();
+            
+            // 绘制文本
+            drawText();
+        }
+        
+        // 绘制背景
+        function drawBackground() {
+            if (currentBackground.type === 'color') {
+                ctx.fillStyle = currentBackground.color;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (currentBackground.type === 'gradient') {
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                
+                // 根据方向调整渐变
+                if (currentBackground.gradient.direction === 'to right') {
+                    gradient.addColorStop(0, currentBackground.gradient.start);
+                    gradient.addColorStop(1, currentBackground.gradient.end);
+                } else if (currentBackground.gradient.direction === 'to bottom') {
+                    gradient.addColorStop(0, currentBackground.gradient.start);
+                    gradient.addColorStop(1, currentBackground.gradient.end);
+                } else if (currentBackground.gradient.direction === 'to right bottom') {
+                    gradient.addColorStop(0, currentBackground.gradient.start);
+                    gradient.addColorStop(1, currentBackground.gradient.end);
+                } else if (currentBackground.gradient.direction === 'to left bottom') {
+                    const gradientLeft = ctx.createLinearGradient(canvas.width, 0, 0, canvas.height);
+                    gradientLeft.addColorStop(0, currentBackground.gradient.start);
+                    gradientLeft.addColorStop(1, currentBackground.gradient.end);
+                    ctx.fillStyle = gradientLeft;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    return;
+                } else if (currentBackground.gradient.direction === 'circle at center') {
+                    const radialGradient = ctx.createRadialGradient(
+                        canvas.width / 2, canvas.height / 2, 0,
+                        canvas.width / 2, canvas.height / 2, canvas.width / 2
+                    );
+                    radialGradient.addColorStop(0, currentBackground.gradient.start);
+                    radialGradient.addColorStop(1, currentBackground.gradient.end);
+                    ctx.fillStyle = radialGradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    return;
+                }
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            } else if (currentBackground.type === 'image' && currentBackground.image) {
+                // 绘制背景图片
+                ctx.globalAlpha = currentBackground.imageOpacity;
+                
+                // 计算图片尺寸，确保覆盖整个画布
+                const imgRatio = currentBackground.image.width / currentBackground.image.height;
+                const canvasRatio = canvas.width / canvas.height;
+                
+                let drawWidth, drawHeight, startX, startY;
+                
+                if (imgRatio > canvasRatio) {
+                    // 图片更宽，高度匹配画布高度
+                    drawHeight = canvas.height;
+                    drawWidth = drawHeight * imgRatio;
+                    startX = (canvas.width - drawWidth) / 2;
+                    startY = 0;
+                } else {
+                    // 图片更高或相等，宽度匹配画布宽度
+                    drawWidth = canvas.width;
+                    drawHeight = drawWidth / imgRatio;
+                    startX = 0;
+                    startY = (canvas.height - drawHeight) / 2;
+                }
+                
+                ctx.drawImage(currentBackground.image, startX, startY, drawWidth, drawHeight);
+                
+                // 恢复透明度
+                ctx.globalAlpha = 1;
+                
+                // 绘制叠加层
+                if (currentBackground.overlayOpacity > 0) {
+                    ctx.globalAlpha = currentBackground.overlayOpacity;
+                    ctx.fillStyle = currentBackground.overlay;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.globalAlpha = 1;
+                }
+            }
+        }
+        
+        // 绘制装饰元素
+        function drawElements() {
+            elements.forEach(element => {
+                ctx.save();
+                ctx.globalAlpha = element.opacity;
+                ctx.translate(element.x, element.y);
+                ctx.rotate(element.rotation * Math.PI / 180);
+                
+                ctx.fillStyle = element.color;
+                
+                switch(element.type) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, element.size / 2, 0, Math.PI * 2, false);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(-element.size / 2, -element.size / 2, element.size, element.size);
+                        break;
+                    case 'triangle':
+                        ctx.beginPath();
+                        ctx.moveTo(0, -element.size / 2);
+                        ctx.lineTo(element.size / 2, element.size / 2);
+                        ctx.lineTo(-element.size / 2, element.size / 2);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                    case 'star':
+                        drawStar(0, 0, 5, element.size / 2, element.size / 4);
+                        break;
+                    case 'wave':
+                        drawWave(element.size);
+                        break;
+                    case 'dots':
+                        drawDots(element.size);
+                        break;
+                    case 'lines':
+                        drawLines(element.size);
+                        break;
+                    case 'zigzag':
+                        drawZigzag(element.size);
+                        break;
+                }
+                
+                ctx.restore();
+            });
+        }
+        
+        // 绘制星形
+        function drawStar(cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // 绘制波浪
+        function drawWave(size) {
+            ctx.beginPath();
+            
+            const amplitude = size / 4;
+            const frequency = 8;
+            
+            ctx.moveTo(-size / 2, 0);
+            
+            for (let x = -size / 2; x <= size / a2; x += 5) {
+                ctx.lineTo(x, amplitude * Math.sin((x / size) * frequency * Math.PI));
+            }
+            
+            ctx.stroke();
+        }
+        
+        // 绘制点阵
+        function drawDots(size) {
+            const dotSize = size / 10;
+            const gap = size / 5;
+            
+            for (let x = -size / 2; x <= size / 2; x += gap) {
+                for (let y = -size / 2; y <= size / 2; y += gap) {
+                    ctx.beginPath();
+                    ctx.arc(x, y, dotSize, 0, Math.PI * 2, false);
+                    ctx.fill();
+                }
+            }
+        }
+        
+        // 绘制线条
+        function drawLines(size) {
+            const lineCount = 5;
+            const gap = size / lineCount;
+            
+            ctx.lineWidth = 2;
+            
+            for (let i = 0; i < lineCount; i++) {
+                const y = -size / 2 + i * gap;
+                
+                ctx.beginPath();
+                ctx.moveTo(-size / 2, y);
+                ctx.lineTo(size / 2, y);
+                ctx.stroke();
+            }
+        }
+        
+        // 绘制锯齿线
+        function drawZigzag(size) {
+            ctx.beginPath();
+            
+            const segmentCount = 8;
+            const segmentWidth = size / segmentCount;
+            const segmentHeight = size / 4;
+            
+            ctx.moveTo(-size / 2, 0);
+            
+            for (let i = 0; i < segmentCount; i++) {
+                const x1 = -size / 2 + i * segmentWidth + segmentWidth / 2;
+                const x2 = -size / 2 + (i + 1) * segmentWidth;
+                
+                ctx.lineTo(x1, segmentHeight);
+                ctx.lineTo(x2, 0);
+            }
+            
+            ctx.stroke();
+        }
+        
+        // 绘制Logo
+        function drawLogo() {
+            if (!logoSettings.image) {
+                return;
+            }
+            
+            const logoWidth = logoSettings.size;
+            const logoHeight = (logoSettings.image.height / logoSettings.image.width) * logoWidth;
+            
+            let x, y;
+            
+            // 根据位置确定坐标
+            switch(logoSettings.position) {
+                case 'top-left':
+                    x = 30;
+                    y = 30;
+                    break;
+                case 'top':
+                    x = (canvas.width - logoWidth) / 2;
+                    y = 30;
+                    break;
+                case 'top-right':
+                    x = canvas.width - logoWidth - 30;
+                    y = 30;
+                    break;
+                case 'left':
+                    x = 30;
+                    y = (canvas.height - logoHeight) / 2;
+                    break;
+                case 'center':
+                    x = (canvas.width - logoWidth) / 2;
+                    y = (canvas.height - logoHeight) / 2;
+                    break;
+                case 'right':
+                    x = canvas.width - logoWidth - 30;
+                    y = (canvas.height - logoHeight) / 2;
+                    break;
+                case 'bottom-left':
+                    x = 30;
+                    y = canvas.height - logoHeight - 30;
+                    break;
+                case 'bottom':
+                    x = (canvas.width - logoWidth) / 2;
+                    y = canvas.height - logoHeight - 30;
+                    break;
+                case 'bottom-right':
+                    x = canvas.width - logoWidth - 30;
+                    y = canvas.height - logoHeight - 30;
+                    break;
+                default:
+                    x = (canvas.width - logoWidth) / 2;
+                    y = (canvas.height - logoHeight) / 2;
+            }
+            
+            ctx.drawImage(logoSettings.image, x, y, logoWidth, logoHeight);
+        }
+        
+        // 绘制文本
+        function drawText() {
+            // 设置文本位置和间距
+            const textArea = {
+                width: canvas.width * 0.8,
+                height: canvas.height * 0.6,
+                x: canvas.width * 0.1,
+                y: canvas.height * 0.2
+            };
+            
+            // 绘制标题
+            if (textSettings.heading.text) {
+                ctx.font = `${textSettings.heading.weight} ${textSettings.heading.size}px ${textSettings.heading.font}`;
+                ctx.fillStyle = textSettings.heading.color;
+                ctx.textAlign = textSettings.heading.align;
+                
+                let x;
+                switch (textSettings.heading.align) {
+                    case 'left':
+                        x = textArea.x;
+                        break;
+                    case 'right':
+                        x = textArea.x + textArea.width;
+                        break;
+                    default:
+                        x = canvas.width / 2;
+                }
+                
+                // 多行文本处理
+                const words = textSettings.heading.text.split(' ');
+                let line = '';
+                let lines = [];
+                
+                for (let i = 0; i < words.length; i++) {
+                    const testLine = line + words[i] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    const testWidth = metrics.width;
+                    
+                    if (testWidth > textArea.width && i > 0) {
+                        lines.push(line);
+                        line = words[i] + ' ';
+                    } else {
+                        line = testLine;
+                    }
+                }
+                lines.push(line);
+                
+                let y = canvas.height / 2 - (lines.length - 1) * textSettings.heading.size;
+                
+                lines.forEach(line => {
+                    ctx.fillText(line, x, y);
+                    y += textSettings.heading.size * 1.2;
+                });
+                
+                // 更新下一个文本的起始Y坐标
+                textArea.y = y + 20;
+            }
+            
+            // 绘制副标题
+            if (textSettings.subheading.text) {
+                ctx.font = `${textSettings.subheading.weight} ${textSettings.subheading.size}px ${textSettings.subheading.font}`;
+                ctx.fillStyle = textSettings.subheading.color;
+                ctx.textAlign = textSettings.subheading.align;
+                
+                let x;
+                switch (textSettings.subheading.align) {
+                    case 'left':
+                        x = textArea.x;
+                        break;
+                    case 'right':
+                        x = textArea.x + textArea.width;
+                        break;
+                    default:
+                        x = canvas.width / 2;
+                }
+                
+                ctx.fillText(textSettings.subheading.text, x, textArea.y);
+                
+                // 更新下一个文本的起始Y坐标
+                textArea.y += textSettings.subheading.size * 1.5;
+            }
+            
+            // 绘制描述
+            if (textSettings.description.text) {
+                ctx.font = `${textSettings.description.weight} ${textSettings.description.size}px ${textSettings.description.font}`;
+                ctx.fillStyle = textSettings.description.color;
+                ctx.textAlign = textSettings.description.align;
+                
+                let x;
+                switch (textSettings.description.align) {
+                    case 'left':
+                        x = textArea.x;
+                        break;
+                    case 'right':
+                        x = textArea.x + textArea.width;
+                        break;
+                    default:
+                        x = canvas.width / 2;
+                }
+                
+                // 多行文本处理
+                const words = textSettings.description.text.split(' ');
+                let line = '';
+                let lines = [];
+                
+                for (let i = 0; i < words.length; i++) {
+                    const testLine = line + words[i] + ' ';
+                    const metrics = ctx.measureText(testLine);
+                    const testWidth = metrics.width;
+                    
+                    if (testWidth > textArea.width && i > 0) {
+                        lines.push(line);
+                        line = words[i] + ' ';
+                    } else {
+                        line = testLine;
+                    }
+                }
+                lines.push(line);
+                
+                let y = textArea.y;
+                
+                lines.forEach(line => {
+                    ctx.fillText(line, x, y);
+                    y += textSettings.description.size * 1.2;
+                });
+            }
+        }
+        
+        // 下载图片
+        function downloadImage() {
+            // 创建一个临时链接
+            const link = document.createElement('a');
+            link.download = 'social-media-image.png';
+            
+            // 将画布转换为URL
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                link.href = url;
+                
+                // 触发点击事件下载
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                // 清除对象URL
+                setTimeout(function() {
+                    URL.revokeObjectURL(url);
+                }, 100);
+            });
+        }
+        
+        // 初始化应用
+        window.onload = function() {
+            init();
+        };
+    </script>
+</body>
+</html> 

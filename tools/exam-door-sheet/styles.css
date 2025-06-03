@@ -1,0 +1,726 @@
+/* 全局样式 */
+:root {
+    --primary-color: #3f51b5;
+    --secondary-color: #f50057;
+    --text-color: #333;
+    --light-gray: #f5f5f5;
+    --border-color: #ddd;
+    --paper-width: 210mm;
+    --paper-height: 297mm;
+    --page-margin: 20mm;
+    --content-width: calc(var(--paper-width) - 2 * var(--page-margin));
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Arial', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    color: var(--text-color);
+    background-color: var(--light-gray);
+    line-height: 1.6;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+h1, h2 {
+    color: var(--primary-color);
+}
+
+/* 控制面板样式 */
+.control-panel {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--light-gray);
+    border-radius: 8px;
+    align-items: flex-end;
+}
+
+.form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group small {
+    display: block;
+    color: #666;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.form-group input[type="checkbox"] {
+    margin-right: 5px;
+    transform: scale(1.2);
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn.primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn.primary:hover {
+    background-color: #303f9f;
+}
+
+.btn.secondary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn.secondary:hover {
+    background-color: #c51162;
+}
+
+.btn.upload {
+    background-color: #2196f3;
+    color: white;
+}
+
+.btn.upload:hover {
+    background-color: #0b7dda;
+}
+
+.btn.confirm {
+    background-color: #4caf50;
+    color: white;
+}
+
+.btn.confirm:hover {
+    background-color: #3e8e41;
+}
+
+.btn.clear {
+    background-color: #f44336;
+    color: white;
+}
+
+.btn.clear:hover {
+    background-color: #d32f2f;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* 上传区域样式 */
+.upload-panel {
+    margin-bottom: 30px;
+    padding: 20px;
+    background: var(--light-gray);
+    border-radius: 8px;
+}
+
+.upload-panel h2 {
+    margin-bottom: 10px;
+}
+
+.upload-tip {
+    margin-bottom: 15px;
+    color: #666;
+}
+
+.upload-area {
+    border: 2px dashed var(--primary-color);
+    border-radius: 8px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+.upload-area.active {
+    border-color: #303f9f;
+    background-color: rgba(63, 81, 181, 0.1);
+}
+
+.upload-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 10px;
+}
+
+.file-format {
+    color: #666;
+    font-size: 14px;
+}
+
+.file-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+.file-detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.column-selector {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: rgba(63, 81, 181, 0.05);
+    border-radius: 8px;
+    align-items: flex-end;
+}
+
+.column-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.column-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.column-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.data-preview {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+.data-preview table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.data-preview th, 
+.data-preview td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+.data-preview th {
+    background-color: rgba(63, 81, 181, 0.1);
+    font-weight: bold;
+}
+
+.data-preview tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.data-preview tbody tr:hover {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+.hidden {
+    display: none;
+}
+
+/* 预览区域样式 */
+.preview-container {
+    margin-top: 30px;
+}
+
+.preview-container h2 {
+    margin-bottom: 15px;
+    color: var(--primary-color);
+}
+
+.preview-tip {
+    margin-bottom: 20px;
+    color: #666;
+    font-style: italic;
+}
+
+#preview {
+    margin: 0 auto;
+    background: white;
+}
+
+/* A4纸张样式 */
+.a4-sheet {
+    width: var(--paper-width);
+    height: var(--paper-height);
+    padding: var(--page-margin);
+    margin: 0 auto 30px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    page-break-after: always;
+    position: relative;
+}
+
+/* 门贴标题 */
+.exam-title {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--primary-color);
+}
+
+.exam-count {
+    display: block;
+    text-align: center;
+    font-size: 16px;
+    font-weight: normal;
+    color: #666;
+    margin-top: 3px;
+}
+
+/* 学生列表 - 新的表格式布局 */
+.student-table-container {
+    width: 100%;
+    height: calc(100% - 50px);
+    overflow: hidden;
+}
+
+.student-table {
+    width: 100%;
+    height: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.student-table th,
+.student-table td {
+    padding: 3px 5px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+    line-height: 1.2;
+}
+
+.student-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    height: 7mm;
+}
+
+.student-table .col-name,
+.student-table .col-id {
+    width: 25%; /* 每列25%宽度，总共4列 */
+}
+
+.student-table tbody {
+    height: calc(100% - 7mm);
+}
+
+.student-table tbody tr {
+    height: auto; /* 将由JavaScript动态设置 */
+}
+
+.student-table tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* 删除旧的学生列表样式 */
+.student-list {
+    display: none;
+}
+
+.student-item {
+    display: none;
+}
+
+.student-name, .student-id {
+    display: table-cell;
+}
+
+/* 页脚 */
+footer {
+    margin-top: 30px;
+    text-align: center;
+    color: #666;
+    font-size: 14px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* 媒体查询-用于打印 */
+@media print {
+    body {
+        background: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .container {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        box-shadow: none;
+        background: none;
+    }
+
+    header, .control-panel, .upload-panel, .preview-container h2, .preview-tip, footer {
+        display: none;
+    }
+
+    .a4-sheet {
+        box-shadow: none;
+        margin: 0;
+        page-break-after: always;
+        width: 210mm;
+        height: 297mm;
+        padding: var(--page-margin);
+        overflow: visible;
+    }
+    
+    .student-table-container {
+        break-inside: avoid;
+    }
+    
+    /* 确保没有缩放 */
+    html, body {
+        width: 210mm;
+        height: 297mm;
+    }
+    
+    /* 确保表格在打印时不会被截断 */
+    .student-table {
+        page-break-inside: avoid;
+    }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+    .control-panel, .column-selector {
+        flex-direction: column;
+    }
+    
+    .buttons {
+        width: 100%;
+        margin-top: 15px;
+    }
+    
+    .a4-sheet {
+        transform: scale(0.7);
+        transform-origin: top center;
+        margin-bottom: 0;
+    }
+    
+    .btn {
+        width: 100%;
+    }
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-container span {
+    margin-left: 5px;
+}
+
+.batch-settings {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+.batch-settings label {
+    margin-top: 0;
+}
+
+/* 考场人数配置样式 */
+.room-config-panel {
+    margin-top: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+    background-color: white;
+}
+
+.room-config-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.room-config-table th,
+.room-config-table td {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.room-config-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+.room-config-table input[type="number"] {
+    width: 60px;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-align: center;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 2px 5px;
+    transition: transform 0.2s;
+}
+
+.btn-icon:hover {
+    transform: scale(1.2);
+}
+
+.edit-config {
+    color: #2196f3;
+    margin-right: 5px;
+}
+
+.delete-config {
+    color: #f44336;
+}
+
+.config-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.range-text {
+    display: inline-block;
+    min-width: 40px;
+}
+
+.config-panel {
+    margin: 15px 0;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+.config-panel h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+#classroomConfigTable {
+    width: 100%;
+    margin-bottom: 15px;
+    border-collapse: collapse;
+}
+
+#classroomConfigTable th,
+#classroomConfigTable td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+#classroomConfigTable th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+}
+
+#classroomConfigTable input.classroom-number {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+#classroomConfigTable td:first-child {
+    font-weight: bold;
+    background-color: #f5f5f5;
+}
+
+.delete-classroom {
+    background: none;
+    border: none;
+    color: #ff4444;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 16px;
+}
+
+.delete-classroom:hover {
+    color: #cc0000;
+}
+
+#addClassroomBtn {
+    margin-top: 10px;
+}
+
+.classroom-upload {
+    margin: 15px 0;
+    border: 2px dashed var(--primary-color);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.classroom-upload:hover {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+.classroom-upload.active {
+    border-color: #303f9f;
+    background-color: rgba(63, 81, 181, 0.1);
+}
+
+#classroomFileInfo {
+    margin: 15px 0;
+    padding: 15px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+}
+
+#classroomColumnSelector {
+    margin-top: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding: 15px;
+    background-color: rgba(63, 81, 181, 0.05);
+    border-radius: 8px;
+    align-items: flex-end;
+}
+
+#classroomDataPreview {
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+
+#classroomPreviewTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+#classroomPreviewTable th, 
+#classroomPreviewTable td {
+    padding: 8px;
+    text-align: left;
+    border: 1px solid var(--border-color);
+}
+
+#classroomPreviewTable th {
+    background-color: rgba(63, 81, 181, 0.1);
+    font-weight: bold;
+}
+
+#classroomPreviewTable tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+#classroomPreviewTable tbody tr:hover {
+    background-color: rgba(63, 81, 181, 0.05);
+}
+
+.classroom-number {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    transition: border-color 0.3s;
+}
+
+.classroom-number:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.classroom-number.invalid {
+    border-color: #f44336;
+}
+
+.classroom-number.valid {
+    border-color: #4caf50;
+} 

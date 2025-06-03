@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>语音转文字工具</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+    <div class="container py-5">
+        <h1 class="text-center mb-4">语音转文字工具</h1>
+        <div class="text-center mb-4">
+            <button id="start-record-btn" class="btn btn-primary">
+                <i class="bi bi-mic"></i> 开始录音
+            </button>
+            <button id="stop-record-btn" class="btn btn-secondary" disabled>
+                <i class="bi bi-stop-circle"></i> 停止录音
+            </button>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">转录文本</h5>
+                <p id="transcription" class="card-text">请点击“开始录音”按钮以开始转录。</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/speech-to-text.js"></script>
+</body>
+</html> 

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考场分配系统 - 工具箱</title>
+    <!-- Google AdSense Code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1818070980581550"
+     crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .hint {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .config-import {
+            margin-bottom: 2rem;
+        }
+        .template-download {
+            margin-top: 10px;
+        }
+        .room-config {
+            margin-top: 1rem;
+        }
+        .room-config-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #dee2e6;
+        }
+        .room-config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .column-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .column-option {
+            display: inline-flex;
+            align-items: center;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        .column-option.selected {
+            background: #e7f5ff;
+            color: #0d6efd;
+        }
+        .selected-columns-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .selected-column-tag {
+            display: inline-flex;
+            align-items: center;
+            background: #e7f5ff;
+            color: #0d6efd;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+        }
+        .selected-column-tag i {
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        .apply-btn {
+            margin-top: 20px;
+        }
+        .actions {
+            margin: 2rem 0;
+            text-align: center;
+        }
+        .data-counter {
+            font-size: 0.875rem;
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 12px;
+        }
+        .table-container {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#popular">热门工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#about">关于我们</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面内容 -->
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-building me-2 text-primary"></i>考场分配系统</h1>
+                <p class="lead">高效安排学生考场，轻松导出分配结果</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html#教育工具">教育工具</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">考场分配系统</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="tool-icons mt-md-4">
+                    <span class="badge rounded-pill bg-primary me-2">
+                        <i class="bi bi-mortarboard me-1"></i> 教育工具
+                    </span>
+                    <span class="badge rounded-pill bg-success me-2">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> 本地处理
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-file-earmark-arrow-up me-2"></i>导入学生考号</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="file-upload">
+                            <input type="file" id="fileInput" class="form-control" accept=".csv, .xlsx, .xls">
+                            <div class="mt-3">
+                                <button id="importBtn" class="btn btn-primary"><i class="bi bi-upload me-2"></i>导入数据</button>
+                            </div>
+                        </div>
+                        <p class="hint mt-2">支持CSV, Excel格式，可选择多列数据导入</p>
+                        
+                        <!-- 新增多列选择 -->
+                        <div class="column-select-section mt-4" id="columnSelectSection" style="display: none;">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle-fill me-2"></i> 请选择要导入的列：
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">考号列（必选）：</label>
+                                <select id="examNumberColumnSelect" class="form-select">
+                                    <!-- 动态生成的选项 -->
+                                </select>
+                            </div>
+                            
+                            <div class="additional-columns mb-3">
+                                <label class="form-label fw-bold">额外列（可选多选）：</label>
+                                <div class="column-options" id="columnOptions">
+                                    <!-- 动态生成的列选项将在这里显示 -->
+                                </div>
+                            </div>
+                            
+                            <div class="selected-columns mb-3">
+                                <label class="form-label">已选列：</label>
+                                <div id="selectedColumns" class="selected-columns-list">
+                                    <span class="text-muted">未选择额外列</span>
+                                </div>
+                            </div>
+                            
+                            <button id="confirmColumnBtn" class="btn btn-success"><i class="bi bi-check-circle me-2"></i>确认选择</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-gear-fill me-2"></i>考场配置</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="config-import">
+                            <h5 class="card-title"><i class="bi bi-file-earmark-spreadsheet me-2"></i>导入考场配置</h5>
+                            <div class="file-upload">
+                                <input type="file" id="configFileInput" class="form-control" accept=".csv, .xlsx, .xls">
+                                <div class="mt-3">
+                                    <button id="importConfigBtn" class="btn btn-primary"><i class="bi bi-upload me-2"></i>导入配置</button>
+                                </div>
+                            </div>
+                            <p class="hint mt-2">配置文件格式需包含：起始考场号、结束考场号、每考场人数</p>
+                            <div class="template-download">
+                                <button id="downloadTemplateBtn" class="btn btn-outline-secondary"><i class="bi bi-download me-2"></i>下载配置模板</button>
+                            </div>
+                            
+                            <!-- 配置列选择 -->
+                            <div class="column-select-section mt-4" id="configColumnSelectSection" style="display: none;">
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle-fill me-2"></i> 请选择考场配置中的列：
+                                </div>
+                                <div class="config-column-mapping">
+                                    <div class="row mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label">起始考场号列：</label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <select id="startRoomColumnSelect" class="form-select"></select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label">结束考场号列：</label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <select id="endRoomColumnSelect" class="form-select"></select>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            <label class="form-label">每考场人数列：</label>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <select id="studentsPerRoomColumnSelect" class="form-select"></select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button id="confirmConfigColumnBtn" class="btn btn-success"><i class="bi bi-check-circle me-2"></i>确认选择</button>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <h5 class="card-title"><i class="bi bi-pencil-square me-2"></i>手动配置</h5>
+                        <div id="roomConfig" class="room-config">
+                            <!-- 考场配置将动态生成 -->
+                        </div>
+                        <div class="row mt-3 mb-3">
+                            <div class="col-md-6">
+                                <button id="addConfigBtn" class="btn btn-success w-100 mb-2"><i class="bi bi-plus-circle me-2"></i>添加考场组</button>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="addBatchConfigBtn" class="btn btn-outline-primary w-100 mb-2" data-bs-toggle="modal" data-bs-target="#batchConfigModal"><i class="bi bi-grid-3x3 me-2"></i>批量添加考场</button>
+                            </div>
+                        </div>
+                        <button id="applyConfigBtn" class="btn btn-primary btn-lg w-100 apply-btn"><i class="bi bi-magic me-2"></i>应用考场配置</button>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="bi bi-table me-2"></i>数据预览</h4>
+                        <span class="data-counter" id="dataCounter">0 条记录</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table id="dataTable" class="table table-striped table-hover">
+                                <thead class="table-primary" id="dataTableHeader">
+                                    <tr>
+                                        <th>序号</th>
+                                        <th>考号</th>
+                                        <th>考场</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 数据将在这里动态加载 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-file-earmark-arrow-down me-2"></i>导出结果</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <p>完成考场分配后，点击下方按钮导出Excel格式的分配结果</p>
+                        <button id="exportBtn" class="btn btn-danger btn-lg" disabled><i class="bi bi-file-earmark-excel me-2"></i>导出分配结果</button>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-info-circle me-2"></i>使用说明</h4>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>导入包含考号的Excel表格或CSV文件</li>
+                            <li>选择考号列及需要保留的其他列</li>
+                            <li>通过导入配置文件或手动设置考场分配规则</li>
+                            <li>点击"应用考场配置"进行分配</li>
+                            <li>检查预览结果</li>
+                            <li>点击"导出分配结果"下载完整的Excel文件</li>
+                        </ol>
+                        <div class="alert alert-info">
+                            <i class="bi bi-lightbulb me-2"></i>提示：配置文件可以灵活设置不同考场的人数，满足各种考试场景需求
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批量添加考场模态框 -->
+    <div class="modal fade" id="batchConfigModal" tabindex="-1" aria-labelledby="batchConfigModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="batchConfigModalLabel">批量添加考场</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="batchStartRoom" class="form-label">起始考场号</label>
+                        <input type="number" class="form-control" id="batchStartRoom" value="1" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="batchEndRoom" class="form-label">结束考场号</label>
+                        <input type="number" class="form-control" id="batchEndRoom" value="10" min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="batchStudentsPerRoom" class="form-label">每考场人数</label>
+                        <input type="number" class="form-control" id="batchStudentsPerRoom" value="30" min="1">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmBatchConfigBtn">确认添加</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚前的广告区域 -->
+    <div class="container my-5">
+        <!-- 原生横幅广告 -->
+        <script async="async" data-cfasync="false" src="//possiblesunken.com/97aaaa04e7baca50972c8fc193a81c09/invoke.js"></script>
+        <div id="container-97aaaa04e7baca50972c8fc193a81c09" class="mb-4"></div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-tools me-2"></i>工具箱</h5>
+                    <p>一站式在线工具平台，免费、高效、便捷</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="../index.html" class="text-white">首页</a></li>
+                        <li><a href="../index.html#popular" class="text-white">热门工具</a></li>
+                        <li><a href="../index.html#all-tools" class="text-white">全部工具</a></li>
+                        <li><a href="../index.html#about" class="text-white">关于我们</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="mailto:contact@toolbox.com" class="text-white">contact@toolbox.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy; 2023 工具箱. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="exam-allocation.js"></script>
+</body>
+</html> 

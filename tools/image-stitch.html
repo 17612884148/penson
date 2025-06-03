@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图片拼接/长图制作 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .upload-area:hover, .upload-area.dragover {
+            border-color: #0d6efd;
+            background-color: rgba(13, 110, 253, 0.05);
+        }
+        .image-preview-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .image-actions {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            display: flex;
+            gap: 5px;
+        }
+        .action-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .image-thumbnail {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+        }
+        .canvas-container {
+            max-width: 100%;
+            overflow: auto;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            text-align: center;
+        }
+        #previewCanvas {
+            max-width: 100%;
+            margin: 0 auto;
+            display: block;
+        }
+        .drop-indicator {
+            border: 2px dashed #0d6efd;
+            margin: 10px 0;
+            border-radius: 6px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#popular">热门工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#about">关于我们</a>
+                    </li>
+                    <li class="nav-item ms-2 d-flex align-items-center">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="dark-mode-toggle">
+                            <label class="form-check-label text-white" for="dark-mode-toggle">
+                                <i class="bi bi-moon-stars"></i>
+                            </label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面内容 -->
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-images me-2 text-primary"></i>图片拼接/长图制作</h1>
+                <p class="lead">将多张图片拼接成长图，支持横向和纵向拼接，批量处理，自定义间距与背景</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html#多媒体处理">多媒体处理</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">图片拼接/长图制作</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="tool-icons mt-md-4">
+                    <span class="badge rounded-pill bg-primary me-2">
+                        <i class="bi bi-image me-1"></i> 图像处理
+                    </span>
+                    <span class="badge rounded-pill bg-success me-2">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> 本地处理
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 主要内容放在这里 -->
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 上传图片区域 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">上传图片</h5>
+                        <div class="mb-4">
+                            <div class="upload-area p-5 text-center border rounded mb-3" id="dropArea">
+                                <i class="bi bi-images display-4 text-primary mb-3"></i>
+                                <p class="mb-2">拖放图片到这里或点击下方按钮选择</p>
+                                <p class="text-muted mb-3">支持JPG、PNG、WebP等格式，可同时上传多张图片</p>
+                                <input type="file" id="imageInput" accept="image/*" class="d-none" multiple>
+                                <button class="btn btn-primary" id="uploadBtn">
+                                    <i class="bi bi-plus-circle me-2"></i>选择图片
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 图片预览和排序区域 -->
+                <div class="card mb-4" id="imageListCard" style="display: none;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="card-title mb-0">图片排序</h5>
+                            <div>
+                                <button class="btn btn-outline-danger btn-sm" id="clearAllBtn">
+                                    <i class="bi bi-trash me-1"></i>清除全部
+                                </button>
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-3">拖动图片调整拼接顺序，点击删除按钮移除不需要的图片</p>
+                        <div id="imageList" class="row g-3">
+                            <!-- 图片预览将在这里显示 -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 拼接设置 -->
+                <div class="card mb-4" id="stitchSettingsCard" style="display: none;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">拼接设置</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">拼接方向</label>
+                                <div class="d-flex">
+                                    <div class="form-check me-3">
+                                        <input class="form-check-input" type="radio" name="stitchDirection" id="verticalStitch" value="vertical" checked>
+                                        <label class="form-check-label" for="verticalStitch">
+                                            <i class="bi bi-arrow-down me-1"></i>纵向拼接
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="stitchDirection" id="horizontalStitch" value="horizontal">
+                                        <label class="form-check-label" for="horizontalStitch">
+                                            <i class="bi bi-arrow-right me-1"></i>横向拼接
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="spacingInput" class="form-label">图片间距</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" id="spacingInput" min="0" max="100" value="0">
+                                    <span class="input-group-text">像素</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="bgColorInput" class="form-label">背景颜色</label>
+                                <input type="color" class="form-control form-control-color w-100" id="bgColorInput" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="outputQualitySlider" class="form-label">输出质量: <span id="qualityValue">90%</span></label>
+                                <input type="range" class="form-range" id="outputQualitySlider" min="10" max="100" value="90">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="outputFormat" class="form-label">输出格式</label>
+                                <select class="form-select" id="outputFormat">
+                                    <option value="jpeg">JPEG</option>
+                                    <option value="png">PNG</option>
+                                    <option value="webp">WebP</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button class="btn btn-primary btn-lg" id="generateBtn">
+                                <i class="bi bi-images me-2"></i>生成拼接图
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预览和下载区域 -->
+                <div class="card mb-4" id="resultCard" style="display: none;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">拼接结果</h5>
+                        <div class="canvas-container mb-3">
+                            <canvas id="previewCanvas"></canvas>
+                        </div>
+                        <div class="d-flex justify-content-center">
+                            <button class="btn btn-success me-2" id="downloadBtn">
+                                <i class="bi bi-download me-2"></i>下载图片
+                            </button>
+                            <button class="btn btn-outline-primary" id="regenerateBtn">
+                                <i class="bi bi-arrow-repeat me-2"></i>重新生成
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- 关于工具 -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">关于图片拼接</h5>
+                        <p>图片拼接是将多张图片组合成一张图片的处理方式，常用于：</p>
+                        <ul>
+                            <li>制作长图文章或朋友圈分享</li>
+                            <li>合并截图或照片</li>
+                            <li>制作教程或说明书</li>
+                            <li>整理社交媒体内容</li>
+                            <li>创建全景图或拼贴画</li>
+                        </ul>
+                        <p>我们的工具支持纵向和横向拼接，并且可以自定义间距和背景颜色，轻松满足不同需求。</p>
+                    </div>
+                </div>
+                
+                <!-- 使用说明 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">使用说明</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>上传需要拼接的图片（可以一次选择多张）</li>
+                            <li>拖动调整图片的拼接顺序</li>
+                            <li>选择拼接方向（纵向或横向）</li>
+                            <li>根据需要设置图片间距和背景颜色</li>
+                            <li>点击"生成拼接图"按钮创建拼接图片</li>
+                            <li>预览效果后，点击"下载图片"保存结果</li>
+                        </ol>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle me-2"></i>提示：图片处理在您的浏览器本地完成，不会上传到服务器，保证您的隐私安全。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-tools me-2"></i>工具箱</h5>
+                    <p class="text-muted">提供各种实用的在线工具，让您的工作和生活更加便捷。</p>
+                </div>
+                <div class="col-md-6">
+                    <h5>相关链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="../index.html#about" class="text-decoration-none text-white-50">关于我们</a></li>
+                        <li><a href="../index.html#feedback" class="text-decoration-none text-white-50">反馈建议</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center text-white-50">
+                <small>&copy; 2023 工具箱 | 所有工具仅供学习与参考</small>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript 放在这里 -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 获取DOM元素
+        const dropArea = document.getElementById('dropArea');
+        const imageInput = document.getElementById('imageInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const imageList = document.getElementById('imageList');
+        const imageListCard = document.getElementById('imageListCard');
+        const stitchSettingsCard = document.getElementById('stitchSettingsCard');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const verticalStitch = document.getElementById('verticalStitch');
+        const horizontalStitch = document.getElementById('horizontalStitch');
+        const spacingInput = document.getElementById('spacingInput');
+        const bgColorInput = document.getElementById('bgColorInput');
+        const outputQualitySlider = document.getElementById('outputQualitySlider');
+        const qualityValue = document.getElementById('qualityValue');
+        const outputFormat = document.getElementById('outputFormat');
+        const generateBtn = document.getElementById('generateBtn');
+        const resultCard = document.getElementById('resultCard');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const regenerateBtn = document.getElementById('regenerateBtn');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        
+        // 保存上传的图片数据
+        let uploadedImages = [];
+        
+        // 暗黑模式切换
+        darkModeToggle.addEventListener('change', function() {
+            document.body.classList.toggle('dark-mode');
+            localStorage.setItem('darkMode', this.checked ? 'enabled' : 'disabled');
+        });
+        
+        // 检查用户之前的暗黑模式偏好
+        if (localStorage.getItem('darkMode') === 'enabled') {
+            darkModeToggle.checked = true;
+            document.body.classList.add('dark-mode');
+        }
+
+        // 初始化Sortable，实现拖拽排序
+        new Sortable(imageList, {
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            onEnd: function() {
+                // 重新排序图片数组
+                const items = Array.from(imageList.querySelectorAll('.image-item'));
+                const newImages = [];
+                
+                items.forEach(item => {
+                    const index = parseInt(item.dataset.index);
+                    newImages.push(uploadedImages[index]);
+                });
+                
+                uploadedImages = newImages;
+                
+                // 更新图片索引
+                items.forEach((item, index) => {
+                    item.dataset.index = index;
+                });
+            }
+        });
+        
+        // 上传按钮点击事件
+        uploadBtn.addEventListener('click', function() {
+            imageInput.click();
+        });
+        
+        // 文件选择事件
+        imageInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+        
+        // 拖放事件处理
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('dragover');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('dragover');
+        }
+        
+        dropArea.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        });
+        
+        // 处理上传的文件
+        function handleFiles(files) {
+            if (files.length === 0) return;
+            
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+            
+            if (imageFiles.length === 0) {
+                showAlert('请上传图片文件（JPG、PNG等格式）。', 'warning');
+                return;
+            }
+            
+            // 显示图片列表卡片和设置卡片
+            imageListCard.style.display = 'block';
+            stitchSettingsCard.style.display = 'block';
+            
+            // 处理每个图片文件
+            imageFiles.forEach(file => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const imgData = e.target.result;
+                    
+                    // 创建图片对象以获取宽高
+                    const img = new Image();
+                    img.onload = function() {
+                        // 添加到图片数组
+                        const imageObj = {
+                            data: imgData,
+                            name: file.name,
+                            width: img.width,
+                            height: img.height,
+                            aspectRatio: img.width / img.height
+                        };
+                        
+                        uploadedImages.push(imageObj);
+                        
+                        // 更新图片预览
+                        renderImageList();
+                    };
+                    
+                    img.src = imgData;
+                };
+                
+                reader.readAsDataURL(file);
+            });
+        }
+        
+        // 渲染图片列表
+        function renderImageList() {
+            imageList.innerHTML = '';
+            
+            uploadedImages.forEach((image, index) => {
+                const imageItem = document.createElement('div');
+                imageItem.className = 'col-lg-3 col-md-4 col-sm-6 image-item';
+                imageItem.dataset.index = index;
+                
+                imageItem.innerHTML = `
+                    <div class="image-preview-container">
+                        <img src="${image.data}" class="image-thumbnail" alt="图片 ${index + 1}">
+                        <div class="image-actions">
+                            <div class="action-btn delete-btn" title="删除图片">
+                                <i class="bi bi-trash"></i>
+                            </div>
+                            <div class="action-btn rotate-btn" title="旋转图片">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </div>
+                        </div>
+                        <div class="mt-2 small text-center text-muted">
+                            ${image.width} × ${image.height}
+                        </div>
+                    </div>
+                `;
+                
+                // 删除按钮事件
+                const deleteBtn = imageItem.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', function() {
+                    uploadedImages.splice(index, 1);
+                    renderImageList();
+                    
+                    if (uploadedImages.length === 0) {
+                        imageListCard.style.display = 'none';
+                        stitchSettingsCard.style.display = 'none';
+                        resultCard.style.display = 'none';
+                    }
+                });
+                
+                // 旋转按钮事件
+                const rotateBtn = imageItem.querySelector('.rotate-btn');
+                rotateBtn.addEventListener('click', function() {
+                    rotateImage(index);
+                });
+                
+                imageList.appendChild(imageItem);
+            });
+        }
+        
+        // 旋转图片
+        function rotateImage(index) {
+            const image = uploadedImages[index];
+            
+            // 创建画布进行旋转
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 交换宽高
+            canvas.width = image.height;
+            canvas.height = image.width;
+            
+            // 创建图片对象
+            const img = new Image();
+            img.onload = function() {
+                // 旋转90度
+                ctx.translate(canvas.width / 2, canvas.height / 2);
+                ctx.rotate(Math.PI / 2);
+                ctx.drawImage(img, -image.width / 2, -image.height / 2);
+                
+                // 更新图片数据
+                const rotatedData = canvas.toDataURL();
+                
+                // 更新图片对象
+                uploadedImages[index] = {
+                    data: rotatedData,
+                    name: image.name,
+                    width: image.height,
+                    height: image.width,
+                    aspectRatio: image.height / image.width
+                };
+                
+                // 重新渲染
+                renderImageList();
+            };
+            
+            img.src = image.data;
+        }
+        
+        // 清除所有图片
+        clearAllBtn.addEventListener('click', function() {
+            if (uploadedImages.length === 0) return;
+            
+            if (confirm('确定要清除所有上传的图片吗？')) {
+                uploadedImages = [];
+                imageList.innerHTML = '';
+                imageListCard.style.display = 'none';
+                stitchSettingsCard.style.display = 'none';
+                resultCard.style.display = 'none';
+            }
+        });
+        
+        // 质量滑块事件
+        outputQualitySlider.addEventListener('input', function() {
+            qualityValue.textContent = this.value + '%';
+        });
+        
+        // 生成拼接图
+        generateBtn.addEventListener('click', function() {
+            if (uploadedImages.length === 0) {
+                showAlert('请先上传图片。', 'warning');
+                return;
+            }
+            
+            if (uploadedImages.length === 1) {
+                showAlert('拼接需要至少2张图片。', 'warning');
+                return;
+            }
+            
+            const isVertical = verticalStitch.checked;
+            const spacing = parseInt(spacingInput.value) || 0;
+            const bgColor = bgColorInput.value;
+            
+            // 计算拼接后的尺寸
+            let totalWidth = 0;
+            let totalHeight = 0;
+            
+            if (isVertical) {
+                // 垂直拼接：取最大宽度，累加高度
+                totalWidth = Math.max(...uploadedImages.map(img => img.width));
+                totalHeight = uploadedImages.reduce((sum, img) => sum + img.height, 0) + (spacing * (uploadedImages.length - 1));
+            } else {
+                // 水平拼接：累加宽度，取最大高度
+                totalWidth = uploadedImages.reduce((sum, img) => sum + img.width, 0) + (spacing * (uploadedImages.length - 1));
+                totalHeight = Math.max(...uploadedImages.map(img => img.height));
+            }
+            
+            // 防止画布过大
+            const MAX_DIMENSION = 10000;
+            if (totalWidth > MAX_DIMENSION || totalHeight > MAX_DIMENSION) {
+                showAlert(`拼接图尺寸过大 (${totalWidth}x${totalHeight})，请减少图片数量或降低图片分辨率。`, 'danger');
+                return;
+            }
+            
+            // 创建画布
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = totalWidth;
+            canvas.height = totalHeight;
+            
+            // 填充背景色
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // 绘制图片
+            let currentX = 0;
+            let currentY = 0;
+            
+            const drawImages = (index) => {
+                if (index >= uploadedImages.length) {
+                    // 所有图片绘制完成，显示结果
+                    showResult(canvas);
+                    return;
+                }
+                
+                const image = uploadedImages[index];
+                const img = new Image();
+                
+                img.onload = function() {
+                    // 计算绘制位置
+                    let x = currentX;
+                    let y = currentY;
+                    
+                    // 如果是垂直拼接，居中绘制
+                    if (isVertical) {
+                        x = (totalWidth - image.width) / 2;
+                    } else {
+                        y = (totalHeight - image.height) / 2;
+                    }
+                    
+                    // 绘制图片
+                    ctx.drawImage(img, x, y, image.width, image.height);
+                    
+                    // 更新位置
+                    if (isVertical) {
+                        currentY += image.height + spacing;
+                    } else {
+                        currentX += image.width + spacing;
+                    }
+                    
+                    // 绘制下一张图片
+                    drawImages(index + 1);
+                };
+                
+                img.src = image.data;
+            };
+            
+            // 开始绘制
+            drawImages(0);
+        });
+        
+        // 显示拼接结果
+        function showResult(canvas) {
+            // 显示结果卡片
+            resultCard.style.display = 'block';
+            
+            // 设置预览画布
+            previewCanvas.width = canvas.width;
+            previewCanvas.height = canvas.height;
+            
+            const ctx = previewCanvas.getContext('2d');
+            ctx.drawImage(canvas, 0, 0);
+            
+            // 滚动到结果区域
+            resultCard.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 下载拼接图片
+        downloadBtn.addEventListener('click', function() {
+            const quality = parseFloat(outputQualitySlider.value) / 100;
+            const format = outputFormat.value;
+            let mimeType;
+            let ext;
+            
+            switch (format) {
+                case 'jpeg':
+                    mimeType = 'image/jpeg';
+                    ext = 'jpg';
+                    break;
+                case 'png':
+                    mimeType = 'image/png';
+                    ext = 'png';
+                    break;
+                case 'webp':
+                    mimeType = 'image/webp';
+                    ext = 'webp';
+                    break;
+                default:
+                    mimeType = 'image/jpeg';
+                    ext = 'jpg';
+            }
+            
+            // 获取图像数据
+            const dataURL = previewCanvas.toDataURL(mimeType, quality);
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = `拼接图片_${new Date().getTime()}.${ext}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+        
+        // 重新生成
+        regenerateBtn.addEventListener('click', function() {
+            resultCard.style.display = 'none';
+            stitchSettingsCard.scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // 显示提示信息
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.createElement('div');
+            alertContainer.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
+            alertContainer.style.zIndex = 9999;
+            alertContainer.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(alertContainer);
+            
+            // 3秒后自动关闭
+            setTimeout(() => {
+                alertContainer.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(alertContainer);
+                }, 300);
+            }, 3000);
+        }
+    });
+    </script>
+</body>
+</html> 

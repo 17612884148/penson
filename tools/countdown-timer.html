@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>倒计时器 - 工具箱</title>
+    <!-- Google AdSense Code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1818070980581550"
+     crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .countdown-display {
+            font-size: 4rem;
+            font-weight: bold;
+            font-family: monospace;
+            text-align: center;
+            margin: 1.5rem 0;
+            line-height: 1;
+        }
+        
+        .countdown-display .time-unit {
+            display: inline-block;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .countdown-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            display: block;
+            text-align: center;
+            margin-top: 0.5rem;
+            color: var(--secondary-color);
+        }
+        
+        .countdown-controls {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .countdown-progress {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+        }
+        
+        .event-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .event-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--box-shadow);
+        }
+        
+        .event-card.completed {
+            border-left-color: var(--success-color);
+            opacity: 0.75;
+        }
+        
+        .event-card.active {
+            border-left-color: var(--warning-color);
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+        
+        @media (max-width: 768px) {
+            .countdown-display {
+                font-size: 2.5rem;
+            }
+            
+            .countdown-display .time-unit {
+                min-width: 70px;
+            }
+        }
+        
+        /* 主题样式 */
+        .theme-dark {
+            background-color: #343a40;
+            color: #fff;
+        }
+        
+        .theme-dark .countdown-display {
+            color: #fff;
+        }
+        
+        .theme-dark .countdown-label {
+            color: #adb5bd;
+        }
+        
+        .theme-colorful .time-unit {
+            background-color: rgba(var(--bs-primary-rgb), 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin: 0 5px;
+            color: var(--bs-primary);
+        }
+        
+        .theme-colorful .countdown-label {
+            color: var(--bs-primary);
+            font-weight: bold;
+        }
+        
+        .theme-minimal .countdown-display {
+            font-family: 'Arial', sans-serif;
+            font-weight: 300;
+        }
+        
+        .theme-minimal .time-unit {
+            border-bottom: 2px solid var(--bs-primary);
+            padding-bottom: 10px;
+        }
+        
+        .theme-minimal .countdown-label {
+            font-size: 0.7rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html">首页</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#popular">热门工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#all-tools">全部工具</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../index.html#about">关于我们</a>
+                    </li>
+                    <li class="nav-item ms-2 d-flex align-items-center">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="dark-mode-toggle">
+                            <label class="form-check-label text-white" for="dark-mode-toggle">
+                                <i class="bi bi-moon-stars"></i>
+                            </label>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 页面内容 -->
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-alarm me-2 text-primary"></i>倒计时器</h1>
+                <p class="lead">创建自定义倒计时，跟踪重要事件和截止日期</p>
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="../index.html">首页</a></li>
+                        <li class="breadcrumb-item"><a href="../index.html#生活工具">生活工具</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">倒计时器</li>
+                    </ol>
+                </nav>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="tool-icons mt-md-4">
+                    <span class="badge rounded-pill bg-primary me-2">
+                        <i class="bi bi-house-heart me-1"></i> 生活工具
+                    </span>
+                    <span class="badge rounded-pill bg-success me-2">
+                        <i class="bi bi-clock-history me-1"></i> 时间管理
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- 主倒计时器 -->
+                <div class="card mb-4">
+                    <div class="card-body text-center">
+                        <div id="active-countdown-container">
+                            <h5 class="card-title mb-3" id="active-countdown-title">选择或创建一个倒计时</h5>
+                            
+                            <div class="progress countdown-progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="countdown-progress-bar" style="width: 0%"></div>
+                            </div>
+                            
+                            <div class="countdown-display" id="countdown-display">
+                                <div class="time-unit">
+                                    <span id="days">00</span>
+                                    <span class="countdown-label">天</span>
+                                </div>
+                                <div class="time-unit">
+                                    <span id="hours">00</span>
+                                    <span class="countdown-label">时</span>
+                                </div>
+                                <div class="time-unit">
+                                    <span id="minutes">00</span>
+                                    <span class="countdown-label">分</span>
+                                </div>
+                                <div class="time-unit">
+                                    <span id="seconds">00</span>
+                                    <span class="countdown-label">秒</span>
+                                </div>
+                            </div>
+                            
+                            <div id="countdown-message" class="mb-4 text-muted" style="display: none;">
+                                倒计时进行中...
+                            </div>
+                            
+                            <div class="countdown-controls">
+                                <div class="btn-group d-flex mb-4" role="group">
+                                    <button id="pauseBtn" class="btn btn-warning btn-lg" disabled>
+                                        <i class="bi bi-pause-circle me-2"></i>暂停
+                                    </button>
+                                    <button id="resetBtn" class="btn btn-danger btn-lg" disabled>
+                                        <i class="bi bi-arrow-clockwise me-2"></i>重置
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 创建新倒计时 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">创建新倒计时</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="countdown-form">
+                            <div class="mb-3">
+                                <label for="event-name" class="form-label">事件名称</label>
+                                <input type="text" class="form-control" id="event-name" placeholder="例如：项目截止日期" required>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="event-date" class="form-label">日期</label>
+                                    <input type="date" class="form-control" id="event-date" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="event-time" class="form-label">时间</label>
+                                    <input type="time" class="form-control" id="event-time" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="event-description" class="form-label">事件描述 (可选)</label>
+                                <textarea class="form-control" id="event-description" rows="2" placeholder="添加事件的详细描述..."></textarea>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="notification-type" class="form-label">提醒方式</label>
+                                <select class="form-select" id="notification-type">
+                                    <option value="none">无提醒</option>
+                                    <option value="sound" selected>声音提醒</option>
+                                    <option value="both">声音和浏览器通知</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="repeat-option" class="form-label">重复选项</label>
+                                <select class="form-select" id="repeat-option">
+                                    <option value="none" selected>不重复</option>
+                                    <option value="daily">每天</option>
+                                    <option value="weekly">每周</option>
+                                    <option value="monthly">每月</option>
+                                    <option value="yearly">每年</option>
+                                    <option value="custom">自定义</option>
+                                </select>
+                            </div>
+                            
+                            <div id="custom-repeat" class="mb-3" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="repeat-interval" class="form-label">重复间隔</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" id="repeat-interval" min="1" value="1">
+                                            <select class="form-select" id="repeat-unit">
+                                                <option value="days">天</option>
+                                                <option value="weeks">周</option>
+                                                <option value="months">月</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="repeat-end" class="form-label">结束于</label>
+                                        <input type="date" class="form-control" id="repeat-end">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="countdown-theme" class="form-label">倒计时主题</label>
+                                <select class="form-select" id="countdown-theme">
+                                    <option value="default" selected>默认主题</option>
+                                    <option value="dark">暗色主题</option>
+                                    <option value="colorful">彩色主题</option>
+                                    <option value="minimal">简约主题</option>
+                                </select>
+                            </div>
+                            
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-plus-circle me-2"></i>创建倒计时
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <!-- 已保存的倒计时 -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">已保存的倒计时</h5>
+                        <button id="clear-all-btn" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> 清除所有
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="saved-countdowns">
+                            <div class="text-center text-muted py-5" id="no-countdowns-message">
+                                <i class="bi bi-hourglass display-4 mb-3"></i>
+                                <p>还没有已保存的倒计时</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 使用说明 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">使用说明</h5>
+                    </div>
+                    <div class="card-body">
+                        <ol>
+                            <li>填写事件名称、日期和时间</li>
+                            <li>选择提醒方式（可选）</li>
+                            <li>点击"创建倒计时"按钮</li>
+                            <li>已创建的倒计时会保存在右侧列表中</li>
+                            <li>点击已保存的倒计时可以激活它</li>
+                        </ol>
+                        <div class="alert alert-info mt-3">
+                            <i class="bi bi-info-circle me-2"></i>
+                            所有倒计时都保存在本地，即使关闭浏览器也不会丢失
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 相关工具 -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">相关工具</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item"><a href="pomodoro.html">番茄工作法计时器</a></li>
+                            <li class="list-group-item"><a href="date-calculator.html">日期/时间计算</a></li>
+                            <li class="list-group-item"><a href="to-do-list.html">任务清单</a></li>
+                            <li class="list-group-item"><a href="notes.html">便签/笔记</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="bi bi-tools me-2"></i>工具箱</h5>
+                    <p>一站式在线工具平台，免费、高效、便捷</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>链接</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="../index.html" class="text-white">首页</a></li>
+                        <li><a href="../index.html#popular" class="text-white">热门工具</a></li>
+                        <li><a href="../index.html#all-tools" class="text-white">全部工具</a></li>
+                        <li><a href="../index.html#about" class="text-white">关于我们</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>联系我们</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="mailto:contact@toolbox.com" class="text-white">contact@toolbox.com</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p>&copy; 2023 工具箱. 保留所有权利.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 音频元素 -->
+    <audio id="notification-sound" preload="auto">
+        <source src="../media/notification.mp3" type="audio/mp3">
+    </audio>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const countdownForm = document.getElementById('countdown-form');
+            const eventNameInput = document.getElementById('event-name');
+            const eventDateInput = document.getElementById('event-date');
+            const eventTimeInput = document.getElementById('event-time');
+            const eventDescriptionInput = document.getElementById('event-description');
+            const notificationTypeSelect = document.getElementById('notification-type');
+            const repeatOptionSelect = document.getElementById('repeat-option');
+            const customRepeatDiv = document.getElementById('custom-repeat');
+            const repeatIntervalInput = document.getElementById('repeat-interval');
+            const repeatUnitSelect = document.getElementById('repeat-unit');
+            const repeatEndInput = document.getElementById('repeat-end');
+            const countdownThemeSelect = document.getElementById('countdown-theme');
+            const savedCountdownsContainer = document.getElementById('saved-countdowns');
+            const noCountdownsMessage = document.getElementById('no-countdowns-message');
+            const clearAllBtn = document.getElementById('clear-all-btn');
+            
+            // 倒计时显示元素
+            const countdownTitle = document.getElementById('active-countdown-title');
+            const countdownMessage = document.getElementById('countdown-message');
+            const countdownProgressBar = document.getElementById('countdown-progress-bar');
+            const daysElement = document.getElementById('days');
+            const hoursElement = document.getElementById('hours');
+            const minutesElement = document.getElementById('minutes');
+            const secondsElement = document.getElementById('seconds');
+            
+            // 控制按钮
+            const pauseBtn = document.getElementById('pauseBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            
+            // 通知音频
+            const notificationSound = document.getElementById('notification-sound');
+            
+            // 存储倒计时的数组
+            let countdowns = JSON.parse(localStorage.getItem('countdowns')) || [];
+            
+            // 当前激活的倒计时
+            let activeCountdown = null;
+            let countdownInterval = null;
+            let isPaused = false;
+            
+            // 设置当前日期为默认值
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
+            eventDateInput.value = formattedDate;
+            eventTimeInput.value = '12:00';
+            
+            // 为重复选项添加监听器
+            repeatOptionSelect.addEventListener('change', function() {
+                if (this.value === 'custom') {
+                    customRepeatDiv.style.display = 'block';
+                    
+                    // 设置结束日期默认为一个月后
+                    const endDate = new Date(today);
+                    endDate.setMonth(endDate.getMonth() + 1);
+                    repeatEndInput.value = endDate.toISOString().split('T')[0];
+                } else {
+                    customRepeatDiv.style.display = 'none';
+                }
+            });
+            
+            // 检查浏览器通知权限
+            function checkNotificationPermission() {
+                if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                    Notification.requestPermission();
+                }
+            }
+            
+            // 初始化页面
+            function init() {
+                loadCountdowns();
+                checkNotificationPermission();
+                
+                // 如果有之前正在运行的倒计时，恢复它
+                const activeCountdownId = localStorage.getItem('activeCountdownId');
+                if (activeCountdownId) {
+                    const countdown = countdowns.find(c => c.id === activeCountdownId);
+                    if (countdown) {
+                        activateCountdown(countdown);
+                    }
+                }
+                
+                // 应用保存的主题
+                applyTheme(localStorage.getItem('countdownTheme') || 'default');
+            }
+            
+            // 主题应用函数
+            function applyTheme(theme) {
+                const container = document.getElementById('active-countdown-container');
+                
+                // 移除现有主题类
+                container.classList.remove('theme-dark', 'theme-colorful', 'theme-minimal');
+                
+                // 应用选择的主题
+                switch(theme) {
+                    case 'dark':
+                        container.classList.add('theme-dark');
+                        break;
+                    case 'colorful':
+                        container.classList.add('theme-colorful');
+                        break;
+                    case 'minimal':
+                        container.classList.add('theme-minimal');
+                        break;
+                }
+                
+                // 保存主题选择
+                localStorage.setItem('countdownTheme', theme);
+            }
+            
+            // 监听主题选择变化
+            countdownThemeSelect.addEventListener('change', function() {
+                applyTheme(this.value);
+            });
+            
+            // 加载已保存的倒计时
+            function loadCountdowns() {
+                if (countdowns.length === 0) {
+                    noCountdownsMessage.style.display = 'block';
+                    return;
+                }
+                
+                noCountdownsMessage.style.display = 'none';
+                savedCountdownsContainer.innerHTML = '';
+                
+                // 按日期排序
+                countdowns.sort((a, b) => new Date(a.targetDate) - new Date(b.targetDate));
+                
+                // 当前时间
+                const now = new Date();
+                
+                countdowns.forEach(countdown => {
+                    const targetDate = new Date(countdown.targetDate);
+                    let isCompleted = targetDate < now;
+                    const isActive = countdown.id === localStorage.getItem('activeCountdownId');
+                    
+                    // 检查是否是重复倒计时，如果是并且已经过期，则计算下一次执行时间
+                    if (isCompleted && countdown.repeat && countdown.repeat !== 'none') {
+                        const nextDate = calculateNextOccurrence(targetDate, countdown.repeat, countdown.repeatConfig);
+                        
+                        // 如果存在下一次执行时间，更新目标日期
+                        if (nextDate > now) {
+                            isCompleted = false;
+                            countdown.targetDate = nextDate.toISOString();
+                            
+                            // 保存更新后的倒计时
+                            saveCountdowns();
+                        }
+                    }
+                    
+                    const countdownElement = document.createElement('div');
+                    countdownElement.className = `event-card card mb-3 ${isCompleted ? 'completed' : ''} ${isActive ? 'active' : ''}`;
+                    
+                    // 计算剩余时间
+                    let timeLeft = '';
+                    if (isCompleted) {
+                        timeLeft = '已结束';
+                    } else {
+                        const diff = Math.floor((targetDate - now) / 1000);
+                        const days = Math.floor(diff / 86400);
+                        
+                        if (days > 0) {
+                            timeLeft = `还剩 ${days} 天`;
+                        } else {
+                            const hours = Math.floor((diff % 86400) / 3600);
+                            const minutes = Math.floor((diff % 3600) / 60);
+                            timeLeft = `还剩 ${hours}小时${minutes}分钟`;
+                        }
+                    }
+                    
+                    // 添加重复图标
+                    let repeatIcon = '';
+                    if (countdown.repeat && countdown.repeat !== 'none') {
+                        repeatIcon = '<i class="bi bi-arrow-repeat ms-2" title="重复倒计时"></i>';
+                    }
+                    
+                    countdownElement.innerHTML = `
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1">${countdown.name} ${repeatIcon}</h5>
+                                    <p class="card-text text-muted small mb-1">
+                                        ${targetDate.toLocaleString('zh-CN')}
+                                    </p>
+                                    <p class="card-text ${isCompleted ? 'text-success' : 'text-primary'} small">
+                                        <i class="bi ${isCompleted ? 'bi-check-circle' : 'bi-hourglass-split'} me-1"></i>
+                                        ${timeLeft}
+                                    </p>
+                                </div>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary edit-btn" data-id="${countdown.id}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger delete-btn" data-id="${countdown.id}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 添加点击事件，激活倒计时
+                    countdownElement.addEventListener('click', function(e) {
+                        if (!e.target.closest('.delete-btn') && !e.target.closest('.edit-btn')) {
+                            activateCountdown(countdown);
+                        }
+                    });
+                    
+                    // 添加编辑按钮事件
+                    const editBtn = countdownElement.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        editCountdown(countdown.id);
+                    });
+                    
+                    // 添加删除按钮事件
+                    const deleteBtn = countdownElement.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        deleteCountdown(countdown.id);
+                    });
+                    
+                    savedCountdownsContainer.appendChild(countdownElement);
+                });
+            }
+            
+            // 计算下一次重复日期
+            function calculateNextOccurrence(lastDate, repeatType, repeatConfig) {
+                const nextDate = new Date(lastDate);
+                
+                switch(repeatType) {
+                    case 'daily':
+                        nextDate.setDate(nextDate.getDate() + 1);
+                        break;
+                    case 'weekly':
+                        nextDate.setDate(nextDate.getDate() + 7);
+                        break;
+                    case 'monthly':
+                        nextDate.setMonth(nextDate.getMonth() + 1);
+                        break;
+                    case 'yearly':
+                        nextDate.setFullYear(nextDate.getFullYear() + 1);
+                        break;
+                    case 'custom':
+                        if (repeatConfig) {
+                            const { interval, unit, endDate } = repeatConfig;
+                            
+                            // 检查是否已过结束日期
+                            if (endDate && new Date(endDate) < new Date()) {
+                                return null;
+                            }
+                            
+                            // 根据间隔单位计算下一次日期
+                            switch(unit) {
+                                case 'days':
+                                    nextDate.setDate(nextDate.getDate() + interval);
+                                    break;
+                                case 'weeks':
+                                    nextDate.setDate(nextDate.getDate() + (interval * 7));
+                                    break;
+                                case 'months':
+                                    nextDate.setMonth(nextDate.getMonth() + interval);
+                                    break;
+                            }
+                        }
+                        break;
+                }
+                
+                return nextDate;
+            }
+            
+            // 编辑倒计时
+            function editCountdown(id) {
+                const countdown = countdowns.find(c => c.id === id);
+                if (!countdown) return;
+                
+                // 填充表单
+                eventNameInput.value = countdown.name;
+                
+                const targetDate = new Date(countdown.targetDate);
+                eventDateInput.value = targetDate.toISOString().split('T')[0];
+                
+                // 格式化时间为HH:MM
+                const hours = targetDate.getHours().toString().padStart(2, '0');
+                const minutes = targetDate.getMinutes().toString().padStart(2, '0');
+                eventTimeInput.value = `${hours}:${minutes}`;
+                
+                eventDescriptionInput.value = countdown.description || '';
+                notificationTypeSelect.value = countdown.notificationType || 'sound';
+                
+                // 设置重复选项
+                repeatOptionSelect.value = countdown.repeat || 'none';
+                
+                // 如果是自定义重复，显示和填充自定义选项
+                if (countdown.repeat === 'custom' && countdown.repeatConfig) {
+                    customRepeatDiv.style.display = 'block';
+                    repeatIntervalInput.value = countdown.repeatConfig.interval || 1;
+                    repeatUnitSelect.value = countdown.repeatConfig.unit || 'days';
+                    
+                    if (countdown.repeatConfig.endDate) {
+                        repeatEndInput.value = countdown.repeatConfig.endDate.split('T')[0];
+                    }
+                } else {
+                    customRepeatDiv.style.display = 'none';
+                }
+                
+                // 设置主题
+                countdownThemeSelect.value = countdown.theme || 'default';
+                
+                // 滚动到表单
+                countdownForm.scrollIntoView({ behavior: 'smooth' });
+                
+                // 更改提交按钮文本
+                const submitBtn = countdownForm.querySelector('button[type="submit"]');
+                submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>更新倒计时';
+                
+                // 将表单模式设置为编辑
+                countdownForm.dataset.mode = 'edit';
+                countdownForm.dataset.editId = id;
+            }
+            
+            // 创建或更新倒计时
+            countdownForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = eventNameInput.value.trim();
+                const dateValue = eventDateInput.value;
+                const timeValue = eventTimeInput.value;
+                const description = eventDescriptionInput.value.trim();
+                const notificationType = notificationTypeSelect.value;
+                const repeatOption = repeatOptionSelect.value;
+                const theme = countdownThemeSelect.value;
+                
+                if (!name || !dateValue || !timeValue) {
+                    showAlert('请填写必填字段', 'danger');
+                    return;
+                }
+                
+                // 创建目标日期对象
+                const targetDate = new Date(`${dateValue}T${timeValue}`);
+                
+                // 检查日期是否有效
+                if (isNaN(targetDate.getTime())) {
+                    showAlert('请输入有效的日期和时间', 'danger');
+                    return;
+                }
+                
+                // 如果不是编辑模式，检查日期是否在未来
+                if (countdownForm.dataset.mode !== 'edit' && targetDate <= new Date()) {
+                    showAlert('请选择未来的日期和时间', 'warning');
+                    return;
+                }
+                
+                // 准备重复配置
+                let repeatConfig = null;
+                if (repeatOption === 'custom') {
+                    const interval = parseInt(repeatIntervalInput.value) || 1;
+                    const unit = repeatUnitSelect.value;
+                    const endDate = repeatEndInput.value ? `${repeatEndInput.value}T23:59:59` : null;
+                    
+                    repeatConfig = { interval, unit, endDate };
+                }
+                
+                // 检查是编辑还是创建
+                if (countdownForm.dataset.mode === 'edit') {
+                    // 更新现有倒计时
+                    const id = countdownForm.dataset.editId;
+                    const index = countdowns.findIndex(c => c.id === id);
+                    
+                    if (index !== -1) {
+                        countdowns[index] = {
+                            ...countdowns[index],
+                            name,
+                            targetDate: targetDate.toISOString(),
+                            description,
+                            notificationType,
+                            repeat: repeatOption,
+                            repeatConfig,
+                            theme
+                        };
+                        
+                        showAlert('倒计时已更新', 'success');
+                        
+                        // 如果更新的是当前激活的倒计时，重新激活它
+                        if (activeCountdown && activeCountdown.id === id) {
+                            activateCountdown(countdowns[index]);
+                        }
+                    }
+                    
+                    // 重置表单模式
+                    countdownForm.dataset.mode = 'create';
+                    delete countdownForm.dataset.editId;
+                    
+                    // 恢复按钮文本
+                    const submitBtn = countdownForm.querySelector('button[type="submit"]');
+                    submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>创建倒计时';
+                } else {
+                    // 创建新倒计时对象
+                    const newCountdown = {
+                        id: Date.now().toString(),
+                        name,
+                        targetDate: targetDate.toISOString(),
+                        description,
+                        notificationType,
+                        repeat: repeatOption,
+                        repeatConfig,
+                        theme,
+                        createdAt: new Date().toISOString()
+                    };
+                    
+                    // 添加到倒计时数组
+                    countdowns.push(newCountdown);
+                    
+                    // 激活新创建的倒计时
+                    activateCountdown(newCountdown);
+                    
+                    showAlert('倒计时已创建', 'success');
+                }
+                
+                // 保存到本地存储
+                saveCountdowns();
+                
+                // 重置表单
+                countdownForm.reset();
+                eventDateInput.value = formattedDate;
+                eventTimeInput.value = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
+                customRepeatDiv.style.display = 'none';
+            });
+            
+            // 激活倒计时
+            function activateCountdown(countdown) {
+                // 清除之前的倒计时
+                if (countdownInterval) {
+                    clearInterval(countdownInterval);
+                }
+                
+                // 设置当前激活的倒计时
+                activeCountdown = countdown;
+                localStorage.setItem('activeCountdownId', countdown.id);
+                
+                // 更新UI
+                countdownTitle.textContent = countdown.name;
+                countdownMessage.style.display = 'block';
+                countdownMessage.textContent = countdown.description || '倒计时进行中...';
+                
+                // 应用主题
+                applyTheme(countdown.theme || 'default');
+                
+                // 高亮显示当前激活的倒计时
+                document.querySelectorAll('.event-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+                document.querySelector(`.event-card [data-id="${countdown.id}"]`)?.closest('.event-card').classList.add('active');
+                
+                // 启用控制按钮
+                pauseBtn.disabled = false;
+                resetBtn.disabled = false;
+                
+                // 更新倒计时显示
+                updateCountdown();
+                
+                // 设置定时器，每秒更新一次
+                countdownInterval = setInterval(updateCountdown, 1000);
+            }
+            
+            // 更新倒计时显示
+            function updateCountdown() {
+                if (!activeCountdown || isPaused) return;
+                
+                const now = new Date();
+                const targetDate = new Date(activeCountdown.targetDate);
+                const diff = Math.max(0, Math.floor((targetDate - now) / 1000));
+                
+                if (diff <= 0) {
+                    // 倒计时结束
+                    clearInterval(countdownInterval);
+                    
+                    daysElement.textContent = '00';
+                    hoursElement.textContent = '00';
+                    minutesElement.textContent = '00';
+                    secondsElement.textContent = '00';
+                    
+                    countdownProgressBar.style.width = '100%';
+                    countdownMessage.textContent = '倒计时已结束!';
+                    
+                    // 触发通知
+                    triggerNotification();
+                    
+                    // 检查是否需要重复
+                    if (activeCountdown.repeat && activeCountdown.repeat !== 'none') {
+                        const nextDate = calculateNextOccurrence(
+                            targetDate, 
+                            activeCountdown.repeat, 
+                            activeCountdown.repeatConfig
+                        );
+                        
+                        // 如果有下一次执行时间，更新倒计时
+                        if (nextDate) {
+                            // 更新目标日期
+                            const index = countdowns.findIndex(c => c.id === activeCountdown.id);
+                            if (index !== -1) {
+                                countdowns[index].targetDate = nextDate.toISOString();
+                                saveCountdowns();
+                                
+                                // 短暂延迟后重新启动倒计时
+                                setTimeout(() => {
+                                    activateCountdown(countdowns[index]);
+                                }, 3000);
+                            }
+                        }
+                    }
+                    
+                    // 重新加载倒计时列表以更新状态
+                    loadCountdowns();
+                    
+                    return;
+                }
+                
+                // 计算剩余时间
+                const days = Math.floor(diff / 86400);
+                const hours = Math.floor((diff % 86400) / 3600);
+                const minutes = Math.floor((diff % 3600) / 60);
+                const seconds = diff % 60;
+                
+                // 更新显示
+                daysElement.textContent = padZero(days);
+                hoursElement.textContent = padZero(hours);
+                minutesElement.textContent = padZero(minutes);
+                secondsElement.textContent = padZero(seconds);
+                
+                // 计算进度百分比
+                const totalDuration = (targetDate - new Date(activeCountdown.createdAt)) / 1000;
+                const elapsed = totalDuration - diff;
+                const progress = Math.min(100, Math.floor((elapsed / totalDuration) * 100));
+                
+                countdownProgressBar.style.width = `${progress}%`;
+            }
+            
+            // 数字前补零
+            function padZero(num) {
+                return num < 10 ? `0${num}` : num;
+            }
+            
+            // 触发通知
+            function triggerNotification() {
+                if (!activeCountdown) return;
+                
+                // 播放声音通知
+                if (activeCountdown.notificationType === 'sound' || activeCountdown.notificationType === 'both') {
+                    playNotificationSound();
+                }
+                
+                // 显示浏览器通知
+                if (activeCountdown.notificationType === 'both' && Notification.permission === 'granted') {
+                    const notification = new Notification('倒计时提醒', {
+                        body: `${activeCountdown.name} 已到时间!`,
+                        icon: '../favicon.ico'
+                    });
+                    
+                    notification.onclick = function() {
+                        window.focus();
+                        this.close();
+                    };
+                }
+            }
+            
+            // 播放通知声音
+            function playNotificationSound() {
+                notificationSound.currentTime = 0;
+                notificationSound.play().catch(error => {
+                    console.error('播放通知声音失败:', error);
+                });
+            }
+            
+            // 暂停/继续按钮
+            pauseBtn.addEventListener('click', function() {
+                if (!activeCountdown) return;
+                
+                if (isPaused) {
+                    // 继续倒计时
+                    isPaused = false;
+                    pauseBtn.innerHTML = '<i class="bi bi-pause-circle me-2"></i>暂停';
+                    countdownMessage.textContent = activeCountdown.description || '倒计时进行中...';
+                } else {
+                    // 暂停倒计时
+                    isPaused = true;
+                    pauseBtn.innerHTML = '<i class="bi bi-play-circle me-2"></i>继续';
+                    countdownMessage.textContent = '倒计时已暂停';
+                }
+            });
+            
+            // 重置按钮
+            resetBtn.addEventListener('click', function() {
+                if (!activeCountdown) return;
+                
+                // 清除倒计时
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                
+                // 重置UI
+                countdownTitle.textContent = '选择或创建一个倒计时';
+                countdownMessage.style.display = 'none';
+                daysElement.textContent = '00';
+                hoursElement.textContent = '00';
+                minutesElement.textContent = '00';
+                secondsElement.textContent = '00';
+                countdownProgressBar.style.width = '0%';
+                
+                // 禁用控制按钮
+                pauseBtn.disabled = true;
+                resetBtn.disabled = true;
+                
+                // 移除激活的倒计时
+                localStorage.removeItem('activeCountdownId');
+                activeCountdown = null;
+                isPaused = false;
+                
+                // 移除高亮
+                document.querySelectorAll('.event-card').forEach(card => {
+                    card.classList.remove('active');
+                });
+            });
+            
+            // 清除所有倒计时
+            clearAllBtn.addEventListener('click', function() {
+                if (confirm('确定要清除所有倒计时吗？此操作不可撤销。')) {
+                    countdowns = [];
+                    saveCountdowns();
+                    localStorage.removeItem('activeCountdownId');
+                    
+                    // 重置UI
+                    resetBtn.click();
+                    
+                    showAlert('所有倒计时已清除', 'success');
+                }
+            });
+            
+            // 删除单个倒计时
+            function deleteCountdown(id) {
+                // 如果正在删除当前激活的倒计时，重置倒计时
+                if (activeCountdown && activeCountdown.id === id) {
+                    resetBtn.click();
+                }
+                
+                // 从数组中移除
+                countdowns = countdowns.filter(countdown => countdown.id !== id);
+                
+                // 保存到本地存储
+                saveCountdowns();
+                
+                // 重新加载列表
+                loadCountdowns();
+                
+                showAlert('倒计时已删除', 'success');
+            }
+            
+            // 保存倒计时到本地存储
+            function saveCountdowns() {
+                localStorage.setItem('countdowns', JSON.stringify(countdowns));
+                loadCountdowns();
+            }
+            
+            // 显示提示消息
+            function showAlert(message, type) {
+                const alertElement = document.createElement('div');
+                alertElement.className = `alert alert-${type} alert-dismissible fade show`;
+                alertElement.role = 'alert';
+                alertElement.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                // 在表单前插入提示
+                countdownForm.parentNode.insertBefore(alertElement, countdownForm);
+                
+                // 3秒后自动关闭
+                setTimeout(() => {
+                    alertElement.classList.remove('show');
+                    setTimeout(() => alertElement.remove(), 300);
+                }, 3000);
+            }
+            
+            // 初始化页面
+            init();
+        });
+    </script>
+</body>
+</html>

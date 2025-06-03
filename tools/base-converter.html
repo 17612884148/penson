@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进制转换器 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <style>
+        .converter-card { transition: transform 0.2s; }
+        .bit-visualization { background: #f8f9fa; padding: 15px; border-radius: 8px; }
+        .history-item:hover { background-color: #f8f9fa; }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- 统一导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+            <!-- 导航菜单项 -->
+        </div>
+    </nav>
+
+    <div class="container py-5">
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <h1 class="mb-3"><i class="bi bi-calculator me-2 text-primary"></i>智能进制转换</h1>
+                <p class="lead">支持2-36进制互转，集成位运算可视化与表达式计算</p>
+            </div>
+        </div>
+
+        <!-- 主转换区 -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <div class="row g-3" id="converterInputs">
+                            <!-- 动态生成进制输入框 -->
+                        </div>
+                        <hr>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary" onclick="togglePresets()">
+                                常用预设 <i class="bi bi-gear"></i>
+                            </button>
+                            <button class="btn btn-outline-success" onclick="parseExpression()">
+                                表达式计算 <i class="bi bi-calculator"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 位运算区 -->
+            <div class="col-md-6">
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="bi bi-diagram-3"></i> 位运算可视化</h5>
+                        <div class="bit-visualization" id="bitContainer">
+                            <!-- 位可视化动态生成 -->
+                        </div>
+                        <div class="mt-3 input-group">
+                            <select class="form-select" id="bitOperation">
+                                <option value="AND">AND</option>
+                                <option value="OR">OR</option>
+                                <option value="XOR">XOR</option>
+                                <option value="NOT">NOT</option>
+                            </select>
+                            <button class="btn btn-primary" onclick="performBitOperation()">执行运算</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 历史记录区 -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-clock-history"></i> 转换历史</h5>
+                <div id="historyList">
+                    <!-- 历史记录动态加载 -->
+                </div>
+                <button class="btn btn-outline-danger mt-3" onclick="clearHistory()">
+                    清除历史 <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs"></script>
+    <script>
+        // 初始化配置
+        const presets = [2, 8, 10, 16];
+        let history = JSON.parse(localStorage.getItem('conversionHistory')) || [];
+        
+        // 初始化进制输入框
+        function initConverterInputs() {
+            const container = document.getElementById('converterInputs');
+            presets.forEach(base => {
+                const inputGroup = document.createElement('div');
+                inputGroup.className = 'col-12';
+                inputGroup.innerHTML = `
+                    <div class="input-group">
+                        <span class="input-group-text">${base}进制</span>
+                        <input type="text" class="form-control" id="base${base}" 
+                            data-base="${base}" oninput="convertBase(this)">
+                    </div>
+                `;
+                container.appendChild(inputGroup);
+            });
+        }
+
+        // 转换核心逻辑
+        function convertBase(inputElement) {
+            const value = inputElement.value.trim();
+            const fromBase = parseInt(inputElement.dataset.base);
+            
+            if (!value) {
+                presets.forEach(base => {
+                    if (base !== fromBase) document.getElementById(`base${base}`).value = '';
+                });
+                return;
+            }
+
+            // 增强输入验证
+            const validChars = Array.from({length: fromBase}, (_,i) => i.toString(fromBase)).join('');
+            if (!new RegExp(`^[${validChars}]+$`, 'i').test(value) && !/^[0-9a-z+\-*/%^&|() ]+$/i.test(value)) {
+                alert(`非法字符！${fromBase}进制只能包含：${validChars.toUpperCase()}`);
+                return;
+            }
+
+            try {
+                // 进制转换核心
+                const decimalValue = /^[0-9a-z]+$/i.test(value) 
+                    ? parseInt(value, fromBase)
+                    : math.evaluate(value);
+
+                if (isNaN(decimalValue)) {
+                    throw new Error('无法解析的数值');
+                } else if (!Number.isSafeInteger(decimalValue)) {
+                    throw new Error('数值超出安全整数范围');
+                }
+
+                presets.forEach(base => {
+                    if (base !== fromBase) {
+                        const output = decimalValue.toString(base).toUpperCase();
+                        document.getElementById(`base${base}`).value = output;
+                    }
+                });
+
+                // 更新位运算可视化
+                updateBitVisualization(decimalValue);
+                updateHistory({
+                    input: value,
+                    fromBase: fromBase,
+                    result: decimalValue.toString(10),
+                    timestamp: new Date().toLocaleString()
+                });
+            } catch (error) {
+                presets.forEach(base => {
+                    if (base !== fromBase) document.getElementById(`base${base}`).value = '';
+                });
+                alert(`转换失败：${error.message}`);
+                console.error('转换错误:', error);
+            }
+        }
+
+        // 表达式解析
+        function parseExpression() {
+            const expr = prompt('请输入数学表达式（支持二进制0b、十六进制0x）:');
+            try {
+                const result = math.evaluate(expr);
+                document.getElementById('base10').value = result;
+                convertBase(document.getElementById('base10'));
+            } catch (error) {
+                alert('表达式解析错误: ' + error.message);
+            }
+        }
+
+        // 位运算处理
+        function performBitOperation() {
+            const currentValue = parseInt(document.getElementById('base10').value);
+            const operation = document.getElementById('bitOperation').value;
+            let result = currentValue;
+
+            switch(operation) {
+                case 'AND':
+                    result = result & promptMask('AND');
+                    break;
+                case 'OR':
+                    result = result | promptMask('OR');
+                    break;
+                case 'XOR':
+                    result = result ^ promptMask('XOR');
+                    break;
+                case 'NOT':
+                    result = ~result;
+                    break;
+            }
+
+            document.getElementById('base10').value = result;
+            convertBase(document.getElementById('base10'));
+        }
+
+        function promptMask(operation) {
+            const mask = prompt(`请输入要执行${operation}运算的掩码（十进制）:`);
+            return mask ? parseInt(mask) : 0;
+        }
+
+        function updateBitVisualization(value) {
+            const bits = value.toString(2).padStart(32, '0').split('');
+            const container = document.getElementById('bitContainer');
+            container.innerHTML = bits.map((bit, index) => 
+                `<span class="bit-box ${bit === '1' ? 'bg-primary' : 'bg-light'}" 
+                    data-value="${31 - index}" 
+                    onclick="toggleBit(this)">${bit}</span>`
+            ).join('');
+        }
+
+        function toggleBit(bitElement) {
+            const bitPos = parseInt(bitElement.dataset.value);
+            const currentValue = parseInt(document.getElementById('base10').value);
+            const newValue = currentValue ^ (1 << bitPos);
+            document.getElementById('base10').value = newValue;
+            convertBase(document.getElementById('base10'));
+        }
+
+        // 历史记录管理
+        function updateHistory(entry) {
+            history.unshift(entry);
+            if (history.length > 10) history.pop();
+            localStorage.setItem('conversionHistory', JSON.stringify(history));
+            
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = history.map((item, index) => `
+                <div class="d-flex justify-content-between align-items-center history-item p-2">
+                    <div>
+                        <span class="fw-bold">${item.input}</span><sub>${item.fromBase}</sub> 
+                        → ${item.result}<sub>10</sub>
+                    </div>
+                    <small class="text-muted">${item.timestamp}</small>
+                </div>
+            `).join('');
+        }
+
+        // 辅助函数
+        function clearHistory() {
+            history = [];
+            localStorage.removeItem('conversionHistory');
+            document.getElementById('historyList').innerHTML = '';
+        }
+
+        // 初始化执行
+        initConverterInputs();
+        updateBitVisualization(0);
+    </script>
+</body>
+</html>

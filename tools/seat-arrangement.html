@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级座位调整 - 工具箱</title>
+    <!-- Google AdSense Code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1818070980581550"
+     crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/react-beautiful-dnd@13.1.1/dist/react-beautiful-dnd.min.css" rel="stylesheet">
+    <link href="../css/style.css" rel="stylesheet">
+    <style>
+        .seat-arrangement {
+            padding: 20px;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .seats-grid {
+            display: grid;
+            gap: 10px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            min-height: 400px;
+        }
+        .seat {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            cursor: move;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 8px;
+            text-align: center;
+        }
+        .seat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .seat.male {
+            background-color: #e6f7ff;
+            border: 1px solid #91d5ff;
+        }
+        .seat.female {
+            background-color: #fff0f6;
+            border: 1px solid #ffadd2;
+        }
+        .seat.empty {
+            background-color: #f5f5f5;
+            border: 1px solid #d9d9d9;
+            color: #999;
+        }
+        .student-info {
+            font-size: 14px;
+            word-break: break-all;
+            line-height: 1.2;
+        }
+        .seat.dragging {
+            opacity: 0.4;
+            transform: scale(0.95);
+        }
+        .seat.drag-over {
+            border: 2px dashed #666;
+        }
+        @media (max-width: 768px) {
+            .seats-grid {
+                gap: 5px;
+                padding: 10px;
+            }
+            .seat {
+                font-size: 12px;
+                padding: 4px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h4 class="card-title mb-0">班级座位调整</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="controls">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text">班级名称</span>
+                                        <input type="text" id="className" class="form-control" placeholder="例如：三年二班">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text">行数</span>
+                                        <input type="number" id="rowCount" class="form-control" value="7" min="1" max="20">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="input-group">
+                                        <span class="input-group-text">列数</span>
+                                        <input type="number" id="colCount" class="form-control" value="8" min="1" max="20">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-secondary" onclick="updateSeatLayout()">
+                                        <i class="bi bi-arrow-clockwise"></i> 更新布局
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <input type="file" id="studentList" accept=".xlsx,.xls" class="d-none">
+                                <button class="btn btn-primary" onclick="document.getElementById('studentList').click()">
+                                    <i class="bi bi-upload"></i> 导入学生名单
+                                </button>
+                                <button class="btn btn-success" onclick="saveSeats()">
+                                    <i class="bi bi-save"></i> 保存座位表
+                                </button>
+                                <button class="btn btn-info" onclick="exportToWord()">
+                                    <i class="bi bi-file-word"></i> 导出为Word
+                                </button>
+                                <button class="btn btn-warning" onclick="clearSeats()">
+                                    <i class="bi bi-trash"></i> 清空座位
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="seatsContainer" class="seats-grid">
+                            <!-- 座位将通过JavaScript动态生成 -->
+                        </div>
+
+                        <div class="mt-4">
+                            <h5>使用说明：</h5>
+                            <ul>
+                                <li>点击"导入学生名单"可以导入Excel格式的学生名单（包含姓名和性别）</li>
+                                <li>直接拖拽座位可以调整学生位置</li>
+                                <li>点击"保存座位表"可以保存当前的座位安排</li>
+                                <li>点击"导出为Word"可以将座位表导出为Word文档</li>
+                                <li>男生显示为淡蓝色，女生显示为淡粉色，空位显示为灰色</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页脚前的广告区域 -->
+    <div class="container my-5">
+        <!-- 原生横幅广告 -->
+        <script async="async" data-cfasync="false" src="//possiblesunken.com/97aaaa04e7baca50972c8fc193a81c09/invoke.js"></script>
+        <div id="container-97aaaa04e7baca50972c8fc193a81c09" class="mb-4"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/react@17/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@17/umd/react-dom.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-beautiful-dnd@13.1.1/dist/react-beautiful-dnd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://unpkg.com/docx@7.1.0/build/index.js"></script>
+    <script src="../js/seat-arrangement.js"></script>
+</body>
+</html> 

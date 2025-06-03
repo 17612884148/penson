@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>考场门贴生成系统</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- 引入html2pdf.js库，用于PDF导出 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- 引入PapaParse库，用于CSV解析 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <!-- 引入XLSX库，用于Excel解析 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>考场门贴生成系统</h1>
+        </header>
+
+        <div class="control-panel">
+            <div class="form-group">
+                <label for="title">考场标题:</label>
+                <input type="text" id="title" placeholder="例如：高二年级期末考试 - 七号楼302" value="2023年高考">
+            </div>
+            <div class="form-group">
+                <label for="examRoom">考场号:</label>
+                <input type="text" id="examRoom" placeholder="输入考场号，如：1" value="1">
+                <small>输入任意考场编号</small>
+            </div>
+            <div class="form-group">
+                <label for="studentCount">考生人数:</label>
+                <input type="number" id="studentCount" min="1" max="300" value="30">
+                <small>如上传考生数据，此项将被自动更新</small>
+            </div>
+            <div class="form-group">
+                <label for="showCount">在标题后显示考生人数:</label>
+                <input type="checkbox" id="showCount" checked>
+            </div>
+            <div class="form-group">
+                <label for="batchGenerate">批量生成:</label>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="batchGenerate">
+                    <span>批量生成多个考场门贴</span>
+                </div>
+            </div>
+            <div class="form-group batch-settings hidden" id="batchSettings">
+                <label for="startRoom">起始考场号:</label>
+                <input type="number" id="startRoom" min="1" value="1">
+                <label for="endRoom" style="margin-top: 10px;">结束考场号:</label>
+                <input type="number" id="endRoom" min="1" value="5">
+                
+                <div style="margin-top: 15px;">
+                    <label>考场人数配置:</label>
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="useCustomRoomConfig">
+                        <span>使用自定义考场人数</span>
+                    </div>
+                </div>
+                
+                <!-- 添加教室号配置选项 -->
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="useCustomClassroom"> 自定义教室号配置
+                    </label>
+                </div>
+                
+                <!-- 添加教室号配置面板 -->
+                <div id="classroomConfigPanel" class="config-panel hidden">
+                    <h3>教室号配置</h3>
+                    <div class="config-actions">
+                        <button type="button" id="importClassroomBtn" class="btn secondary">导入教室配置</button>
+                        <button type="button" id="exportClassroomBtn" class="btn secondary">导出教室配置</button>
+                    </div>
+                    <div class="upload-area classroom-upload hidden" id="classroomUploadArea">
+                        <input type="file" id="classroomFileInput" accept=".xlsx,.xls,.csv" hidden>
+                        <div class="upload-placeholder">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzZjUxYjUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNCIvPjxwb2x5bGluZSBwb2ludHM9IjE3IDggMTIgMyA3IDgiLz48bGluZSB4MT0iMTIiIHkxPSIzIiB4Mj0iMTIiIHkyPSIxNSIvPjwvc3ZnPg==" alt="上传" class="upload-icon">
+                            <p>点击或拖拽Excel文件到此处上传</p>
+                            <p class="file-format">支持Excel(.xlsx/.xls)或CSV文件</p>
+                            <button id="classroomUploadBtn" class="btn upload">选择文件</button>
+                        </div>
+                    </div>
+                    <div id="classroomFileInfo" class="file-info hidden">
+                        <div class="file-detail">
+                            <span id="classroomFileName">未选择文件</span>
+                            <span id="classroomFileSize"></span>
+                        </div>
+                        <div class="column-selector hidden" id="classroomColumnSelector">
+                            <div class="column-group">
+                                <label for="examRoomColumn">考场号列:</label>
+                                <select id="examRoomColumn"></select>
+                            </div>
+                            <div class="column-group">
+                                <label for="classroomColumn">教室号列:</label>
+                                <select id="classroomColumn"></select>
+                            </div>
+                            <button id="confirmClassroomColumns" class="btn confirm">确认列选择</button>
+                        </div>
+                        <div id="classroomDataPreview" class="data-preview hidden">
+                            <p id="classroomDataCount"></p>
+                            <table id="classroomPreviewTable">
+                                <thead>
+                                    <tr>
+                                        <th>考场号</th>
+                                        <th>教室号</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- 数据预览将插入这里 -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <button id="clearClassroomFile" class="btn clear">清除文件</button>
+                    </div>
+                    <table id="classroomConfigTable">
+                        <thead>
+                            <tr>
+                                <th>考场号</th>
+                                <th>教室号</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td><input type="text" class="classroom-number" value="504"></td>
+                                <td>
+                                    <button type="button" class="btn-icon delete-classroom">❌</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td><input type="text" class="classroom-number" value="503"></td>
+                                <td>
+                                    <button type="button" class="btn-icon delete-classroom">❌</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" id="addClassroomBtn" class="btn secondary">添加教室配置</button>
+                </div>
+                
+                <div id="roomConfigPanel" class="room-config-panel hidden">
+                    <table id="roomConfigTable" class="room-config-table">
+                        <thead>
+                            <tr>
+                                <th>考场号范围</th>
+                                <th>人数</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 默认配置 -->
+                            <tr>
+                                <td>
+                                    <span class="range-text">1-5</span>
+                                    <input type="number" class="start-range" value="1" min="1" style="display:none;">
+                                    <span style="display:none;">-</span>
+                                    <input type="number" class="end-range" value="5" min="1" style="display:none;">
+                                </td>
+                                <td>
+                                    <input type="number" class="room-size" value="30" min="1" max="300">
+                                </td>
+                                <td>
+                                    <button type="button" class="btn-icon edit-config">✏️</button>
+                                    <button type="button" class="btn-icon delete-config">❌</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="range-text">6-10</span>
+                                    <input type="number" class="start-range" value="6" min="1" style="display:none;">
+                                    <span style="display:none;">-</span>
+                                    <input type="number" class="end-range" value="10" min="1" style="display:none;">
+                                </td>
+                                <td>
+                                    <input type="number" class="room-size" value="40" min="1" max="300">
+                                </td>
+                                <td>
+                                    <button type="button" class="btn-icon edit-config">✏️</button>
+                                    <button type="button" class="btn-icon delete-config">❌</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="config-actions">
+                        <button type="button" id="addConfigBtn" class="btn confirm">添加配置</button>
+                        <button type="button" id="saveConfigBtn" class="btn primary">保存配置</button>
+                    </div>
+                </div>
+            </div>
+            <div class="buttons">
+                <button id="generateBtn" class="btn primary">生成门贴</button>
+                <button id="exportBtn" class="btn secondary" disabled>导出PDF</button>
+            </div>
+        </div>
+
+        <div class="upload-panel">
+            <h2>考生数据上传（可选）</h2>
+            <p class="upload-tip">上传包含姓名和考号的Excel或CSV文件，替代随机生成的考生数据</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>
+                <div class="upload-placeholder">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMzZjUxYjUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMjEgMTV2NGEyIDIgMCAwIDEtMiAySDVhMiAyIDAgMCAxLTItMnYtNCIvPjxwb2x5bGluZSBwb2ludHM9IjE3IDggMTIgMyA3IDgiLz48bGluZSB4MT0iMTIiIHkxPSIzIiB4Mj0iMTIiIHkyPSIxNSIvPjwvc3ZnPg==" alt="上传" class="upload-icon">
+                    <p>点击或拖拽文件到此处上传</p>
+                    <p class="file-format">支持Excel(.xlsx/.xls)或CSV文件</p>
+                    <button id="uploadBtn" class="btn upload">选择文件</button>
+                </div>
+            </div>
+            
+            <div id="fileInfo" class="file-info hidden">
+                <div class="file-detail">
+                    <span id="fileName">未选择文件</span>
+                    <span id="fileSize"></span>
+                </div>
+                <div class="column-selector hidden" id="columnSelector">
+                    <div class="column-group">
+                        <label for="nameColumn">姓名列:</label>
+                        <select id="nameColumn"></select>
+                    </div>
+                    <div class="column-group">
+                        <label for="idColumn">考号列:</label>
+                        <select id="idColumn"></select>
+                    </div>
+                    <button id="confirmColumns" class="btn confirm">确认列选择</button>
+                </div>
+                <div id="dataPreview" class="data-preview hidden">
+                    <p id="dataCount"></p>
+                    <table id="previewTable">
+                        <thead>
+                            <tr>
+                                <th>姓名</th>
+                                <th>考号</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- 数据预览将插入这里 -->
+                        </tbody>
+                    </table>
+                </div>
+                <button id="clearFile" class="btn clear">清除文件</button>
+            </div>
+        </div>
+
+        <div class="preview-container">
+            <h2>预览区域</h2>
+            <p class="preview-tip">点击"生成门贴"按钮生成A4规格的考场门贴预览</p>
+            <div id="preview">
+                <!-- 生成的考场门贴内容将在这里显示 -->
+            </div>
+        </div>
+
+        <footer>
+            <p>考场门贴生成系统 - 支持A4纸打印 - 本地处理无数据上传</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 

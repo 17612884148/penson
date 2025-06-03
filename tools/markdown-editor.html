@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown编辑器 - 工具箱</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+    <style>
+        .editor-container { height: calc(100vh - 180px); }
+        #editor { height: 100%; resize: none; }
+        #preview { overflow-y: auto; height: 100%; }
+        .export-btn-group { position: absolute; right: 20px; top: 20px; }
+        .toc-container { position: fixed; right: 20px; bottom: 20px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="../index.html">
+                <i class="bi bi-tools me-2"></i>工具箱
+            </a>
+        </div>
+    </nav>
+
+    <div class="container-fluid py-4">
+        <div class="row editor-container g-3">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body p-0">
+                        <textarea id="editor" class="form-control border-0" placeholder="输入Markdown内容..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body" id="preview"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="export-btn-group btn-group">
+            <button class="btn btn-primary" onclick="exportHTML()">
+                <i class="bi bi-filetype-html"></i> 导出HTML
+            </button>
+            <button class="btn btn-success" onclick="exportPDF()">
+                <i class="bi bi-filetype-pdf"></i> 导出PDF
+            </button>
+            <button class="btn btn-info" id="helpButton">
+                <i class="bi bi-question-circle"></i> 帮助
+            </button>
+        </div>
+
+        <div class="toc-container d-none" id="tocPanel">
+            <h6><i class="bi bi-list-task"></i> 目录</h6>
+            <div id="tocList"></div>
+        </div>
+        
+        <div class="history-container" style="position: fixed; left: 20px; bottom: 20px; width: 300px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <h6><i class="bi bi-clock-history"></i> 编辑历史</h6>
+            <div class="list-group" id="historyList" style="max-height: 200px; overflow-y: auto;"></div>
+            <button class="btn btn-outline-danger w-100 mt-2" onclick="clearHistory()">
+                <i class="bi bi-trash me-2"></i>清除历史
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // 初始化配置
+        marked.setOptions({
+            highlight: function(code, lang) {
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true
+        });
+
+        // 实时预览
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        
+        editor.addEventListener('input', () => {
+            preview.innerHTML = marked.parse(editor.value);
+            generateTOC();
+            saveHistory();
+        });
+
+        // 生成目录
+        function generateTOC() {
+            const headings = preview.querySelectorAll('h1, h2, h3, h4, h5, h6');
+            const tocList = document.getElementById('tocList');
+            tocList.innerHTML = Array.from(headings).map((h, index) => 
+                `<a href="#h${index}" class="d-block text-truncate" onclick="scrollToHeading(${index})">
+                    ${h.textContent}
+                </a>`
+            ).join('');
+            document.getElementById('tocPanel').classList.toggle('d-none', headings.length === 0);
+        }
+
+        // 导出功能
+        function exportHTML() {
+            const blob = new Blob([editor.value], {type: 'text/markdown'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `document-${Date.now()}.md`;
+            a.click();
+        }
+
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(editor.value, 10, 10);
+            doc.save(`document-${Date.now()}.pdf`);
+        }
+
+        // 历史记录功能
+        let editHistory = JSON.parse(localStorage.getItem('mdHistory')) || [];
+        
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = editHistory.map((item, index) => `
+                <div class="list-group-item history-item d-flex justify-content-between align-items-center">
+                    <span class="text-truncate" style="max-width: 70%">${item.content.substring(0, 30)}...</span>
+                    <small class="text-muted">${new Date(item.timestamp).toLocaleString('zh-CN', { 
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    })}</small>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadHistory(${index})">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function saveHistory() {
+            editHistory.unshift({
+                content: editor.value,
+                timestamp: new Date().toISOString()
+            });
+            if (editHistory.length > 50) editHistory.pop();
+            localStorage.setItem('mdHistory', JSON.stringify(editHistory));
+            renderHistory();
+        }
+
+        function loadHistory(index) {
+            editor.value = editHistory[index].content;
+            preview.innerHTML = marked.parse(editor.value);
+            generateTOC();
+        }
+
+        function clearHistory() {
+            editHistory = [];
+            localStorage.removeItem('mdHistory');
+            renderHistory();
+        }
+    </script>
+</body>
+</html>
+
+<div class="modal fade" id="helpModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="bi bi-book me-2"></i>Markdown编辑器使用指南</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="list-group mb-4">
+                    <div class="list-group-item bg-white">
+                        <h6><i class="bi bi-list-ol me-2"></i>快速入门</h6>
+                        <ol class="mt-2">
+                            <li>在左侧编辑区输入Markdown格式文本</li>
+                            <li>实时预览将在右侧自动显示</li>
+                            <li>使用工具栏按钮导出HTML/PDF</li>
+                            <li>历史记录自动保存在浏览器本地</li>
+                        </ol>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h6 class="mb-0"><i class="bi bi-keyboard me-2"></i>快捷键</h6>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-4">Ctrl+B</dt>
+                            <dd class="col-sm-8">加粗文本</dd>
+                            <dt class="col-sm-4">Ctrl+I</dt>
+                            <dd class="col-sm-8">斜体文本</dd>
+                            <dt class="col-sm-4">Ctrl+H</dt>
+                            <dd class="col-sm-8">打开帮助</dd>
+                        </dl>
+                    </div>
+                </div>
+
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h6 class="accordion-header">
+                            <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                如何插入代码块？
+                            </button>
+                        </h6>
+                        <div id="faq1" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                使用三个反引号 ` 包裹代码内容，或点击工具栏的代码块按钮
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 初始化帮助功能
+    document.getElementById('helpButton').addEventListener('click', () => {
+        new bootstrap.Modal(document.getElementById('helpModal')).show();
+    });
+
+    // 快捷键支持
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key.toLowerCase() === 'h') {
+            e.preventDefault();
+            new bootstrap.Modal(document.getElementById('helpModal')).show();
+        }
+    });
+</script>
